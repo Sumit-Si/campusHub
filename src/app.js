@@ -1,8 +1,16 @@
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import fs from "fs";
+import path from "path";
 
 const app = express();
+
+const tempDir = path.join(process.cwd(), "public", "temp");
+
+if (!fs.existsSync(tempDir)) {
+  fs.mkdirSync(tempDir, { recursive: true }); // "recursive" makes nested dirs if needed
+}
 
 
 // built in middleware
@@ -19,9 +27,11 @@ app.use(cookieParser());
 
 // custom routes
 import healthCheckRouter from "./routes/healthcheck.routes.js";
+import userRouter from "./routes/user.routes.js";
 
 
 app.use("/api/v1/healthCheck",healthCheckRouter);
+app.use("/api/v1/users",userRouter);
 
 
 export default app;

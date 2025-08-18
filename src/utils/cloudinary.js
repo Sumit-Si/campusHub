@@ -37,7 +37,7 @@ const uploadOnCloudinary = async (localFilePath) => {
 
 const deleteFromCloudinary = async (publicId) => {
   try {
-    const result = cloudinary.uploader.destroy(publicId);
+    cloudinary.uploader.destroy(publicId);
     console.log("Deleted from cloudinary. Public id",publicId);
     
   } catch (error) {
