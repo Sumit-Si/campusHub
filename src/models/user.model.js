@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs"
 import jwt from "jsonwebtoken"
 import { AvailableUserRoles, UserRolesEnum } from "../constants.js";
 
+
 const userSchema = new Schema(
   {
     username: {
@@ -62,6 +63,8 @@ userSchema.methods.isPasswordCorrect = async function (password) {
 
 userSchema.methods.generateAccessToken = function () {
   // short lived access token
+  console.log('Token Expiry:', process.env.ACCESS_TOKEN_EXPIRY);
+
   return jwt.sign(
     {
       _id: this._id,

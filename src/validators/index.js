@@ -51,4 +51,17 @@ const userLoginValidator = () => {
   ];
 };
 
-export { userRegisterValidator, userLoginValidator };
+const changeUserRoleValidator = () => {
+  return [
+    body("role")
+      .notEmpty()
+      .withMessage("Role is required")
+      .trim()
+      .isLowercase()
+      .withMessage("Role must be in lowercase")
+      .isIn(["admin", "student", "faculty"])
+      .withMessage("Role must be one of: admin, student, faculty"),
+  ]
+}
+
+export { userRegisterValidator, userLoginValidator, changeUserRoleValidator };

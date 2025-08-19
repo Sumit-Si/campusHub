@@ -13,7 +13,7 @@ import crypto from "crypto"
 const registerUser = asyncHandler(async (req, res) => {
   console.log(req.body, "req body");
 
-  const { username, fullName, email, password } = req.body;
+  const { username, fullName, email, password, role } = req.body;
 
   const existingUser = await User.findOne({
     $or: [{ username }, { email }],
@@ -47,6 +47,7 @@ const registerUser = asyncHandler(async (req, res) => {
       email,
       password,
       username,
+      role,
       image: image?.url,
     });
 
@@ -101,6 +102,8 @@ const loginUser = asyncHandler(async (req, res) => {
   const options = {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+    maxAge: 24 * 60 * 60 * 1000,
   };
 
   res
@@ -177,11 +180,12 @@ const generateApiKey = asyncHandler(async (req,res) => {
   }
 
   const key = await crypto.randomBytes(32).toString("hex");
-  const expireTime = new Date(Date.now() + 1000 * 60 * 60 * 24 * 7);    // 7 day
+  const expireTime = new Date(Date.now() + 1000 * 60 * 60 * 24 * 7);    // 7 days
 
   const apiKey = await ApiKey.create({
     key,
     expireAt: expireTime,
+    createdBy: user._id
   })
 
   const createdKey = await ApiKey.findById(apiKey._id).select("-expireAt").populate("createdBy","fullName email username");
@@ -199,6 +203,22 @@ const generateApiKey = asyncHandler(async (req,res) => {
 })
 
 const profile = asyncHandler(async (req,res) => {
+  const userId = req.user?._id;
+
+  const user = await User.findById(userId)
+    .select("-password -refreshToken");
+
+  if(!user) {
+    throw new ApiError(400, "Unauthorized!");
+  }
+
+  res
+    .status(200)
+    .json(new ApiResponse(
+      200,
+      user,
+      "User Fetched successfully",
+    ))
 
 })
 

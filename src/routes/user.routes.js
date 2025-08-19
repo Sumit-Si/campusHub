@@ -1,6 +1,6 @@
 import { Router } from "express";
 import {
-    generateApiKey,
+  generateApiKey,
   loginUser,
   profile,
   registerUser,
@@ -25,15 +25,15 @@ router
   );
 
 router
-    .route("/login")
-    .post(userLoginValidator(), validate, loginUser);
+  .route("/login")
+  .post(userLoginValidator(), validate, loginUser);
 
 router
-    .route("/api-key")
-    .get(verifyJWT, generateApiKey);
+  .route("/api-key")
+  .post(verifyJWT, generateApiKey);
 
 router
-    .route("/me")
-    .get(verifyJWT, profile);
+  .route("/me")
+  .get(verifyJWT, profile);
 
 export default router;
