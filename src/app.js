@@ -30,12 +30,14 @@ import healthCheckRouter from "./routes/healthcheck.routes.js";
 import userRouter from "./routes/user.routes.js";
 import adminRouter from "./routes/admin.routes.js"
 import CourseRouter from "./routes/course.routes.js"
+import AnnouncementRouter from "./routes/announcement.routes.js";
 
 
 app.use("/api/v1/healthCheck",healthCheckRouter);
 app.use("/api/v1/users",userRouter);
 app.use("/api/v1/admin",adminRouter);
 app.use("/api/v1/courses",CourseRouter);
+app.use("/api/v1/announcements",AnnouncementRouter);
 
 
 export default app;

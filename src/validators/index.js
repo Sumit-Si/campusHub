@@ -64,4 +64,29 @@ const changeUserRoleValidator = () => {
   ]
 }
 
-export { userRegisterValidator, userLoginValidator, changeUserRoleValidator };
+const createAnnounceValidator = () => {
+  return [
+    body("title")
+      .notEmpty()
+      .withMessage("Title is required")
+      .trim()
+      .isLength({min: 5})
+      .withMessage("Title must be al least 5 characters length"),
+
+    body("message")
+      .trim(),  
+
+    body("expireAt")
+    .optional()
+    .isISO8601().withMessage("expireAt must be a valid ISO8601 date string")
+    .custom((value) => {
+      const expireDate = new Date(value);
+      if (expireDate <= new Date()) {
+        throw new Error("expireAt must be a future date/time");
+      }
+      return true;
+    }),
+  ]
+}
+
+export { userRegisterValidator, userLoginValidator, changeUserRoleValidator, createAnnounceValidator };
