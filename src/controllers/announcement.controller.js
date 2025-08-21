@@ -63,6 +63,8 @@ const createAnnouncement = asyncHandler(async (req, res) => {
     throw new ApiError(500, "Something went wrong while creating announcement");
   }
 
+  //TODO: mail sending to notify about announcements
+
   res
     .status(201)
     .json(

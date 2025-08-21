@@ -1,4 +1,5 @@
 import { UserRolesEnum } from "../constants.js";
+import ApiKey from "../models/apiKey.model.js";
 import User from "../models/user.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import jwt from "jsonwebtoken";
@@ -29,25 +30,56 @@ const verifyJWT = async (req, res, next) => {
   }
 };
 
-const checkRole = (roles = []) => async (req,res,next) => {
+const checkRole =
+  (roles = []) =>
+  async (req, res, next) => {
+    try {
+      if (!req.user) {
+        throw new ApiError(401, "Unauthorized!");
+      }
+
+      const userRole = String(req.user?.role)?.toLowerCase();
+      const allowedRoles = roles.map((role) => role);
+
+      if (!allowedRoles.includes(userRole)) {
+        throw new ApiError(
+          403,
+          `Access denied, ${allowedRoles.join(",")} is necessary`,
+        );
+      }
+
+      next();
+    } catch (error) {
+      throw new ApiError(
+        500,
+        error?.message || "Something went wrong while checking for admin",
+      );
+    }
+  };
+
+const checkApiKey = async (req, res, next) => {
+  const key = req.header("Authorization").replace("Bearer ", "");
+  const userId = req.user?._id;
+
+  if (!key) {
+    throw new ApiError(401, "Create a key to access it");
+  }
+  
   try {
 
-    if(!req.user) {
-      throw new ApiError(401, "Unauthorized!");
-    }
-    
-    const userRole = String(req.user?.role)?.toLowerCase();
-    const allowedRoles = roles.map(role => role);
+    const isKeyExist = await ApiKey.findOne({
+      key,
+      createdBy: userId,
+    });
 
-    if(!allowedRoles.includes(userRole)) {
-      throw new ApiError(403, `Access denied, ${allowedRoles.join(",")} is necessary`);
+    if (!isKeyExist) {
+      throw new ApiError(401, "Unauthorized! - Invalid key");
     }
 
     next();
-    
   } catch (error) {
-    throw new ApiError(500,error?.message || "Something went wrong while checking for admin");
+    throw new ApiError(401, error?.message || "Unauthorized! - Invalid key");
   }
-}
+};
 
-export { verifyJWT,checkRole };
+export { verifyJWT, checkRole, checkApiKey };

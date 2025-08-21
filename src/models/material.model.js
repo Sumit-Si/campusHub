@@ -12,17 +12,13 @@ const materialSchema = new Schema(
       type: String,
       trim: true,
     },
-    fileUrl: {
-      type: String,
-      required: true,
-    },
-    fileType: {
-      type: String,
-      required: true,
-    },
-    size: {
-      type: Number,
-    },
+    uploadFiles: [
+      {
+        fileUrl: { type: String, required: true },
+        fileType: { type: String, required: true },
+        size: Number,
+      },
+    ],
     tags: [
       {
         type: String,
@@ -32,6 +28,11 @@ const materialSchema = new Schema(
     userId: {
       type: Schema.Types.ObjectId,
       ref: "User",
+      required: true,
+    },
+    courseId: {
+      type: Schema.Types.ObjectId,
+      ref: "Course",
       required: true,
     },
   },

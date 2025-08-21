@@ -3,6 +3,7 @@ import Course from "../models/course.model.js";
 import Material from "../models/material.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
+import { deleteFromCloudinary, uploadOnCloudinary } from "../utils/cloudinary.js";
 
 const getCourses = asyncHandler(async (req, res) => {
   const courses = await Course.find();
@@ -57,6 +58,7 @@ const getMaterialsByCourseId = asyncHandler(async (req, res) => {
 
   const course = await Course.findById(courseId).populate("materials");
 
+
   if (!course) {
     throw new ApiError(400, "Course not exists");
   }
@@ -69,8 +71,63 @@ const getMaterialsByCourseId = asyncHandler(async (req, res) => {
 });
 
 const addMaterialsByCourseId = asyncHandler(async (req, res) => {
+  const { name, description, tags } = req.body;
+  const { courseId } = req.params;
+  const userId = req.user?._id;
 
+  const existingMaterial = await Material.findOne({ name, courseId });
+
+  if (existingMaterial) {
+    throw new ApiError(400, "Course material already exists");
+  }
+
+  let uploadResults = [];
+  try {
+    uploadResults = await Promise.all(
+      req.files?.map(file => uploadOnCloudinary(file.path))
+    );
+  } catch (error) {
+    throw new ApiError(400, "Failed to upload files");
+  }
+
+  const results = uploadResults.map(file => ({
+    fileUrl: file?.secure_url,
+    fileType: file?.resource_type,
+    size: file?.bytes,
+    publicId: file?.public_id,
+  }));
+
+
+  try {
+    const material = await Material.create({
+      name,
+      description,
+      uploadFiles: results,
+      tags: typeof tags === "string" ? JSON.parse(tags) : tags,
+      userId,
+      courseId,
+    });
+
+    await Course.findByIdAndUpdate(courseId, { $push: { materials: material._id } });
+
+    res.status(201).json(
+      new ApiResponse(200, material, "Course material added successfully")
+    );
+  } catch (error) {
+    await Promise.all(
+      results.map(async file => {
+        if (file.publicId) {
+          await deleteFromCloudinary(file.publicId);
+        }
+      })
+    );
+    throw new ApiError(
+      500,
+      "Something went wrong while adding the material; uploaded files were deleted"
+    );
+  }
 });
+
 
 export {
   getCourses,
