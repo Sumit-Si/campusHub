@@ -89,4 +89,35 @@ const createAnnounceValidator = () => {
   ]
 }
 
-export { userRegisterValidator, userLoginValidator, changeUserRoleValidator, createAnnounceValidator };
+const createResultsValidator = () => {
+  return [
+    body()
+      .isArray({max: 30})
+      .withMessage("Request body should be an array and maximum be 30"),
+    
+    body("*.studentId")
+      .trim()
+      .notEmpty()
+      .withMessage("StudentId is required"),
+    
+    body("*.courseId")
+      .trim()
+      .notEmpty()
+      .withMessage("CourseId is required"),
+
+    body("*.subject")
+      .notEmpty()
+      .withMessage("Subject is required")
+      .trim(),
+
+    body("*.marks")
+      .notEmpty()
+      .withMessage("Marks is required"),
+
+    body("*.examDate")
+      .notEmpty()
+      .withMessage("examDate is required"),
+  ]
+}
+
+export { userRegisterValidator, userLoginValidator, changeUserRoleValidator, createAnnounceValidator, createResultsValidator };

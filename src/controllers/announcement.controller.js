@@ -1,12 +1,12 @@
 import Announcement from "../models/announcement.model.js";
-import Course from "../models/course.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import { uploadOnCloudinary } from "../utils/cloudinary.js";
 
 const getAnnouncements = asyncHandler(async (req, res) => {
   const Announcements = await Announcement.find()
-    .populate("courseId","name description")
+    .populate("courseId", "name description")
     .populate("userId", "fullName");
 
   if (!Announcements) {
@@ -21,28 +21,32 @@ const getAnnouncements = asyncHandler(async (req, res) => {
 });
 
 const createAnnouncement = asyncHandler(async (req, res) => {
-  const { title, message, target, expireAt, courseId, status, attachments } =
-    req.body;
+  const { title, message, target, expireAt, courseId } = req.body;
   const userId = req.user?._id;
-  let existingGlobalAnnouncement;
 
-  if (status !== "inactive") {
-    existingGlobalAnnouncement = await Announcement.findOne({
-      $and: [{ target: "all" }, { status: "active" }],
-    });
-    if (existingGlobalAnnouncement) {
-      throw new ApiError(400, "Global announcement already exist");
-    }
+  const existingGlobalAnnouncement = await Announcement.findOne({
+    $and: [{ target: "all" }, { status: "active" }],
+  });
+
+  if (existingGlobalAnnouncement) {
+    throw new ApiError(400, "Global announcement already exist");
   }
 
   const expireTime = new Date(expireAt);
 
-  //TODO: upload attachements
-  const attachmentsArray = attachments?.map(
-    file => {
+  let uploadResults = [];
 
-    }
-  )
+  try {
+    uploadResults = await Promise.all(
+      req.files?.map((file) => uploadOnCloudinary(file?.path)),
+    );
+  } catch (error) {
+    throw new ApiError(400, "Failed to upload files");
+  }
+
+  const attachments = uploadResults
+    .map((file) => file?.secure_url)
+    .filter((url) => !!url); // !! means if it's value is true then it's result will be true
 
   const announcement = await Announcement.create({
     title,
@@ -50,14 +54,14 @@ const createAnnouncement = asyncHandler(async (req, res) => {
     userId,
     target,
     courseId,
-    status,
     attachments,
     expireAt: expireTime,
   });
 
   const createdAnnouncement = await Announcement.findById(
     announcement?._id,
-  ).populate("userId", "fullName");
+  ).populate("userId", "fullName email")
+   .populate("courseId","name");
 
   if (!createdAnnouncement) {
     throw new ApiError(500, "Something went wrong while creating announcement");
@@ -75,5 +79,6 @@ const createAnnouncement = asyncHandler(async (req, res) => {
       ),
     );
 });
+
 
 export { getAnnouncements, createAnnouncement };

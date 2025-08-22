@@ -18,27 +18,28 @@ const announcementSchema = new Schema(
       required: true,
     },
     courseId: {
-        type: Schema.Types.ObjectId,
-        ref: "Course"
+      type: Schema.Types.ObjectId,
+      ref: "Course",
     },
     attachments: [
-        {
-            type: String,
-        }
+      {
+        type: String,
+        
+      },
     ],
     status: {
       type: String,
-      enum: ["active","inactive"],
+      enum: ["active", "inactive"],
       default: "active",
     },
     target: {
       type: String,
-      enum: ["all","admins","faculty","students"],
+      enum: ["all", "admins", "faculty", "students"],
       default: "all",
     },
     expireAt: {
       type: Date,
-    }
+    },
   },
   {
     timestamps: true,

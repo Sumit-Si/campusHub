@@ -6,7 +6,7 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { deleteFromCloudinary, uploadOnCloudinary } from "../utils/cloudinary.js";
 
 const getCourses = asyncHandler(async (req, res) => {
-  const courses = await Course.find();
+  const courses = await Course.find().populate("materials" ,"name uploadFiles tags published");
 
   if (!courses) {
     throw new ApiError(400, "Courses not exist");
@@ -94,7 +94,6 @@ const addMaterialsByCourseId = asyncHandler(async (req, res) => {
     fileUrl: file?.secure_url,
     fileType: file?.resource_type,
     size: file?.bytes,
-    publicId: file?.public_id,
   }));
 
 

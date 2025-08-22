@@ -64,9 +64,8 @@ const checkApiKey = async (req, res, next) => {
   if (!key) {
     throw new ApiError(401, "Create a key to access it");
   }
-  
-  try {
 
+  try {
     const isKeyExist = await ApiKey.findOne({
       key,
       createdBy: userId,
