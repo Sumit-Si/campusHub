@@ -43,7 +43,7 @@ const createResults = asyncHandler(async (req, res) => {
   
   const results = await Result.insertMany(bulkResultData);
 
-  if (!results || results.length === 0) {
+  if (!results || results?.length === 0) {
     throw new ApiError(500, "Something went wrong while creating results");
   }
 

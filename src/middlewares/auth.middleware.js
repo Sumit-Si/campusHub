@@ -10,7 +10,7 @@ const verifyJWT = async (req, res, next) => {
     req.header("Authorization").replace("Bearer ", "");
 
   if (!token) {
-    throw new ApiError(401, "Unauthorized!");
+    throw new ApiError(401, "Unauthenticated!");
   }
 
   try {
@@ -19,14 +19,14 @@ const verifyJWT = async (req, res, next) => {
     const user = await User.findById(decodedToken?._id);
 
     if (!user) {
-      throw new ApiError(401, "Unauthorized!");
+      throw new ApiError(401, "Unauthenticated!");
     }
 
     req.user = user;
 
     next();
   } catch (error) {
-    throw new ApiError(401, error?.message || "Unauthorized!");
+    throw new ApiError(401, error?.message || "Unauthenticated!");
   }
 };
 

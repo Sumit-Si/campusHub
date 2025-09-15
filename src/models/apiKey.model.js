@@ -1,4 +1,5 @@
 import mongoose, { Schema } from "mongoose";
+import { ApiKeyStatusEnum, AvailableApiKeyStatus } from "../constants.js";
 
 const apiKeySchema = new Schema(
   {
@@ -13,18 +14,19 @@ const apiKeySchema = new Schema(
       ref: "User",
       required: true,
     },
-    expireAt: {
+    expiresAt: {
       type: Date,
-      required: true,
     },
+    status: {
+      type: String,
+      enum: AvailableApiKeyStatus,
+      default: ApiKeyStatusEnum.ACTIVE,
+    }
   },
   {
     timestamps: true,
   },
 );
-
-// TTL index for auto expiration
-apiKeySchema.index({ expireAt: 1 }, { expireAfterSeconds: 0 });
 
 const ApiKey = new mongoose.model("ApiKey", apiKeySchema);
 

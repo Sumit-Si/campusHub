@@ -6,6 +6,7 @@ import {
   registerUser,
 } from "../controllers/user.controller.js";
 import {
+  generateApiKeyValidator,
   userLoginValidator,
   userRegisterValidator,
 } from "../validators/index.js";
@@ -24,16 +25,12 @@ router
     registerUser,
   );
 
-router
-  .route("/login")
-  .post(userLoginValidator(), validate, loginUser);
+router.route("/login").post(userLoginValidator(), validate, loginUser);
 
-router
-  .route("/api-key")
-  .post(verifyJWT, generateApiKey);
+router.route("/refresh-access-token").get(verifyJWT, generateApiKeyValidator(),validate,generateApiKey);
 
-router
-  .route("/me")
-  .get(verifyJWT, profile);
+router.route("/api-key").post(verifyJWT, generateApiKeyValidator(),validate,generateApiKey);
+
+router.route("/me").get(verifyJWT, profile);
 
 export default router;

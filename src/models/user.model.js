@@ -1,8 +1,7 @@
 import mongoose, { Schema } from "mongoose";
-import bcrypt from "bcryptjs"
-import jwt from "jsonwebtoken"
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 import { AvailableUserRoles, UserRolesEnum } from "../constants.js";
-
 
 const userSchema = new Schema(
   {
@@ -34,7 +33,7 @@ const userSchema = new Schema(
     },
     role: {
       type: String,
-      enums: AvailableUserRoles,
+      enum: AvailableUserRoles,
       default: UserRolesEnum.STUDENT,
     },
     image: {
@@ -63,7 +62,7 @@ userSchema.methods.isPasswordCorrect = async function (password) {
 
 userSchema.methods.generateAccessToken = function () {
   // short lived access token
-  console.log('Token Expiry:', process.env.ACCESS_TOKEN_EXPIRY);
+  console.log("Token Expiry:", process.env.ACCESS_TOKEN_EXPIRY);
 
   return jwt.sign(
     {

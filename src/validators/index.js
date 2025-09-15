@@ -1,5 +1,7 @@
 import { body } from "express-validator";
+import { AvailableUserRoles } from "../constants.js";
 
+// auth validations
 const userRegisterValidator = () => {
   return [
     body("username")
@@ -7,9 +9,9 @@ const userRegisterValidator = () => {
       .withMessage("Username is required")
       .trim()
       .isLowercase()
-      .withMessage("Username must be lowercase")
-      .isLength({ min: 3 })
-      .withMessage("Username must be at lease 3 characters long"),
+      .withMessage("Username must be in lowercase")
+      .isLength({ min: 3, max: 50 })
+      .withMessage("Username must be 3-50 characters"),
 
     body("email")
       .notEmpty()
@@ -18,16 +20,26 @@ const userRegisterValidator = () => {
       .withMessage("Invalid email")
       .trim()
       .isLowercase()
-      .withMessage("Email must be lowercase"),
+      .withMessage("Email must be in lowercase"),
 
     body("password")
       .trim()
       .notEmpty()
       .withMessage("Password is required")
       .isLength({ min: 8, max: 20 })
-      .withMessage("Password must be 8-20 characters length"),
+      .withMessage("Password must be 8-20 characters"),
 
-    body("fullName").trim().notEmpty().withMessage("Full name is required"),
+    body("fullName")
+      .trim()
+      .notEmpty()
+      .withMessage("FullName is required")
+      .isLength({ min: 5, max: 100 })
+      .withMessage("FullName must be 5-100 characters"),
+
+    body("role")
+      .trim()
+      .isIn(AvailableUserRoles)
+      .withMessage("Role must be either student,faculty or admin"),
   ];
 };
 
@@ -40,16 +52,26 @@ const userLoginValidator = () => {
       .withMessage("Invalid email")
       .trim()
       .isLowercase()
-      .withMessage("Email must be lowercase"),
+      .withMessage("Email must be in lowercase"),
 
     body("password")
       .trim()
       .notEmpty()
       .withMessage("Password is required")
       .isLength({ min: 8, max: 20 })
-      .withMessage("Password must be 8-20 characters length"),
+      .withMessage("Password must be 8-20 characters"),
   ];
 };
+
+const generateApiKeyValidator = () => {
+  return [
+    body("expiresAt")
+      .optional()
+      .trim()
+      .isISO8601()
+      .withMessage("ExpiresAt must be a valid iso date"),
+  ]
+}
 
 const changeUserRoleValidator = () => {
   return [
@@ -61,63 +83,61 @@ const changeUserRoleValidator = () => {
       .withMessage("Role must be in lowercase")
       .isIn(["admin", "student", "faculty"])
       .withMessage("Role must be one of: admin, student, faculty"),
-  ]
-}
+  ];
+};
 
+
+// announcement validations
 const createAnnounceValidator = () => {
   return [
     body("title")
       .notEmpty()
       .withMessage("Title is required")
       .trim()
-      .isLength({min: 5})
+      .isLength({ min: 5 })
       .withMessage("Title must be al least 5 characters length"),
 
-    body("message")
-      .trim(),  
+    body("message").trim(),
 
     body("expireAt")
-    .optional()
-    .isISO8601().withMessage("expireAt must be a valid ISO8601 date string")
-    .custom((value) => {
-      const expireDate = new Date(value);
-      if (expireDate <= new Date()) {
-        throw new Error("expireAt must be a future date/time");
-      }
-      return true;
-    }),
-  ]
-}
+      .optional()
+      .isISO8601()
+      .withMessage("expireAt must be a valid ISO8601 date string")
+      .custom((value) => {
+        const expireDate = new Date(value);
+        if (expireDate <= new Date()) {
+          throw new Error("expireAt must be a future date/time");
+        }
+        return true;
+      }),
+  ];
+};
 
+
+// result validations
 const createResultsValidator = () => {
   return [
     body()
-      .isArray({max: 30})
+      .isArray({ max: 30 })
       .withMessage("Request body should be an array and maximum be 30"),
-    
-    body("*.studentId")
-      .trim()
-      .notEmpty()
-      .withMessage("StudentId is required"),
-    
-    body("*.courseId")
-      .trim()
-      .notEmpty()
-      .withMessage("CourseId is required"),
 
-    body("*.subject")
-      .notEmpty()
-      .withMessage("Subject is required")
-      .trim(),
+    body("*.studentId").trim().notEmpty().withMessage("StudentId is required"),
 
-    body("*.marks")
-      .notEmpty()
-      .withMessage("Marks is required"),
+    body("*.courseId").trim().notEmpty().withMessage("CourseId is required"),
 
-    body("*.examDate")
-      .notEmpty()
-      .withMessage("examDate is required"),
-  ]
-}
+    body("*.subject").notEmpty().withMessage("Subject is required").trim(),
 
-export { userRegisterValidator, userLoginValidator, changeUserRoleValidator, createAnnounceValidator, createResultsValidator };
+    body("*.marks").notEmpty().withMessage("Marks is required"),
+
+    body("*.examDate").notEmpty().withMessage("examDate is required"),
+  ];
+};
+
+export {
+  userRegisterValidator,
+  userLoginValidator,
+  generateApiKeyValidator,
+  changeUserRoleValidator,
+  createAnnounceValidator,
+  createResultsValidator,
+};

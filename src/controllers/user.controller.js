@@ -3,16 +3,15 @@ import User from "../models/user.model.js";
 import ApiKey from "../models/apiKey.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
+import jwt from "jsonwebtoken";
 import {
   deleteFromCloudinary,
   uploadOnCloudinary,
 } from "../utils/cloudinary.js";
 import { generateAccessAndRefreshToken } from "../utils/accessRefreshToken.js";
-import crypto from "crypto"
+import crypto from "crypto";
 
 const registerUser = asyncHandler(async (req, res) => {
-  console.log(req.body, "req body");
-
   const { username, fullName, email, password, role } = req.body;
 
   const existingUser = await User.findOne({
@@ -23,22 +22,17 @@ const registerUser = asyncHandler(async (req, res) => {
     throw new ApiError(400, "User already exists");
   }
 
-  console.warn(req.file);
-
   const imageLocalPath = req.file?.path;
-
-  if (!imageLocalPath) {
-    throw new ApiError(400, "Image file is missing");
-  }
-
   let image;
 
-  try {
-    image = await uploadOnCloudinary(imageLocalPath);
-    console.log("Uploaded image", image);
-  } catch (error) {
-    console.log("Error uploading image", error);
-    throw new ApiError(400, "Failed to upload image");
+  if (imageLocalPath) {
+    try {
+      image = await uploadOnCloudinary(imageLocalPath);
+      console.log("Uploaded image", image);
+    } catch (error) {
+      console.log("Error uploading image", error);
+      throw new ApiError(400, "Failed to upload image");
+    }
   }
 
   try {
@@ -48,7 +42,7 @@ const registerUser = asyncHandler(async (req, res) => {
       password,
       username,
       role,
-      image: image?.url,
+      image: image ? image?.url : null,
     });
 
     const createdUser = await User.findById(user._id).select(
@@ -56,7 +50,7 @@ const registerUser = asyncHandler(async (req, res) => {
     ); // for reliabiltiy
 
     if (!createdUser) {
-      throw new ApiError(500, "Problem while creating user");
+      throw new ApiError(500, "Problem while creating a user");
     }
 
     res
@@ -71,7 +65,7 @@ const registerUser = asyncHandler(async (req, res) => {
 
     throw new ApiError(
       500,
-      "Something went wrong while registering a user and image was deleted",
+      "Problem while registering a user and image was deleted",
     );
   }
 });
@@ -93,7 +87,9 @@ const loginUser = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Invalid credientails");
   }
 
-  const { accessToken, refreshToken } = await generateAccessAndRefreshToken(user?._id);
+  const { accessToken, refreshToken } = await generateAccessAndRefreshToken(
+    user?._id,
+  );
 
   const loggedInUser = await User.findById(user._id).select(
     "-password -refreshToken",
@@ -103,13 +99,18 @@ const loginUser = asyncHandler(async (req, res) => {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "strict",
-    maxAge: 24 * 60 * 60 * 1000,
   };
 
   res
     .status(200)
-    .cookie("accessToken", accessToken, options)
-    .cookie("refreshToken", refreshToken, options)
+    .cookie("accessToken", accessToken, {
+      ...options,
+      maxAge: 24 * 60 * 60 * 1000,
+    })
+    .cookie("refreshToken", refreshToken, {
+      ...options,
+      maxAge: 10 * 24 * 60 * 60 * 1000,
+    })
     .json(
       new ApiResponse(
         200,
@@ -120,18 +121,14 @@ const loginUser = asyncHandler(async (req, res) => {
 });
 
 const refreshAccessToken = asyncHandler(async (req, res) => {
-  const token =
-    req.cookies.refreshToken || req.body.refreshtoken;
+  const token = req.cookies.refreshToken || req.body.refreshtoken;
 
   if (!token) {
     throw new ApiError(401, "Refresh token is required");
   }
 
   try {
-    const decodedToken = jwt.verify(
-      token,
-      process.env.REFRESH_TOKEN_SECRET,
-    );
+    const decodedToken = jwt.verify(token, process.env.REFRESH_TOKEN_SECRET);
 
     const user = await User.findById(decodedToken?._id);
 
@@ -163,63 +160,48 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
         ),
       );
   } catch (error) {
-    throw new ApiError(
-      500,
-      "Something went wrong while refreshing access token",
-    );
+    throw new ApiError(500, "Problem while refreshing access token");
   }
 });
 
-const generateApiKey = asyncHandler(async (req,res) => {
+const generateApiKey = asyncHandler(async (req, res) => {
+  const user = req.user;
+  try {
+    const { expiresAt } = req.body;
+    const key = crypto.randomBytes(32).toString("hex");
+
+    const apiKey = await ApiKey.create({
+      key,
+      expiresAt,
+      createdBy: user._id,
+    });
+
+    const createdKey = await ApiKey.findById(apiKey?._id)
+      .select("-expiresAt")
+      .populate("createdBy", "fullName email username");
+
+    if (!createdKey) {
+      throw new ApiError(500, "Problem while creating apiKey");
+    }
+
+    res
+      .status(201)
+      .json(new ApiResponse(200, createdKey, "Api key generated successfully"));
+  } catch (error) {
+    throw new ApiError(500, error.message || "Problem while creating apiKey");
+  }
+});
+
+const profile = asyncHandler(async (req, res) => {
   const userId = req.user?._id;
 
-  const user = await User.findById(userId);
+  const user = await User.findById(userId).select("-password -refreshToken");
 
-  if(!user) {
-    throw new ApiError(401, "Unauthorized!");
+  if (!user) {
+    throw new ApiError(400, "Unauthenticated!");
   }
 
-  const key = await crypto.randomBytes(32).toString("hex");
-  const expireTime = new Date(Date.now() + 1000 * 60 * 60 * 24 * 7);    // 7 days
+  res.status(200).json(new ApiResponse(200, user, "User fetched successfully"));
+});
 
-  const apiKey = await ApiKey.create({
-    key,
-    expireAt: expireTime,
-    createdBy: user._id
-  })
-
-  const createdKey = await ApiKey.findById(apiKey._id).select("-expireAt").populate("createdBy","fullName email username");
-
-  if(!createdKey) {
-    throw new ApiError(500, "Something went wrong while creating apikey")
-  }
-
-  res.status(201)
-    .json(new ApiResponse(
-      200,
-      createdKey,
-      "Api key generated successfully"
-    ))
-})
-
-const profile = asyncHandler(async (req,res) => {
-  const userId = req.user?._id;
-
-  const user = await User.findById(userId)
-    .select("-password -refreshToken");
-
-  if(!user) {
-    throw new ApiError(400, "Unauthorized!");
-  }
-
-  res
-    .status(200)
-    .json(new ApiResponse(
-      200,
-      user,
-      "User Fetched successfully",
-    ))
-
-})
-
-export { registerUser, loginUser,generateApiKey,profile };
+export { registerUser, loginUser, refreshAccessToken, generateApiKey, profile };

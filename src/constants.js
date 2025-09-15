@@ -7,3 +7,10 @@ export const UserRolesEnum = {
 }
 
 export const AvailableUserRoles = Object.values(UserRolesEnum);
+
+export const ApiKeyStatusEnum = {
+    ACTIVE: "active",
+    INACTIVE: "inactive",
+}
+
+export const AvailableApiKeyStatus = Object.values(ApiKeyStatusEnum);
