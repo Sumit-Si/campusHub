@@ -6,8 +6,6 @@ const courseSchema = new Schema(
       type: String,
       required: true,
       trim: true,
-      lowercase: true,
-      index: true,
     },
     description: {
       type: String,
@@ -19,20 +17,28 @@ const courseSchema = new Schema(
     }],
     price: {
       type: Number,
-      trim: true,
       required: true,
       default: 0,
     },
-    userId: {
+    createdBy: {
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
+    deletedAt: {
+      type: Date,
+    }
   },
   {
     timestamps: true,
   },
 );
+
+
+// index
+courseSchema.index({name: 1});
+courseSchema.index({createdBy: 1});
+courseSchema.index({deletedAt: 1});
 
 const Course = new mongoose.model("Course", courseSchema);
 

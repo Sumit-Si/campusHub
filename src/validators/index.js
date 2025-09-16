@@ -66,7 +66,7 @@ const userLoginValidator = () => {
 const generateApiKeyValidator = () => {
   return [
     body("expiresAt")
-      .optional()
+      .optional({values: "falsy"})  // -> skips: undefined, null, '', 0, false
       .trim()
       .isISO8601()
       .withMessage("ExpiresAt must be a valid iso date"),
@@ -85,6 +85,53 @@ const changeUserRoleValidator = () => {
       .withMessage("Role must be one of: admin, student, faculty"),
   ];
 };
+
+
+// course validations
+const createCourseValidator = () => {
+  return [
+    body("name")
+      .trim()
+      .notEmpty()
+      .withMessage("Name is required")
+      .isLength({min: 5,max: 100})
+      .withMessage("Name must be 5-100 characters"),
+
+    body("description")
+      .trim()
+      .optional()
+      .isLength({min: 20, max: 5000})
+      .withMessage("Description must be 20-5000 characters"),
+
+    body("price")
+      .trim()
+      .notEmpty()
+      .withMessage("Price is required")
+      .isInt()
+      .withMessage("Price must be a number"),
+  ]
+}
+
+const createMaterialValidator = () => {
+  return [
+    body("name")
+      .trim()
+      .notEmpty()
+      .withMessage("Name is required")
+      .isLength({min: 5, max: 200})
+      .withMessage("Name must be 5-200 characters"),
+
+    body("description")
+      .trim()
+      .optional()
+      .isLength({min: 20, max: 1000})
+      .withMessage("Description must be 20-1000 characters"),
+
+    body("tags")
+      .trim()
+      .optional(),
+  ]
+}
 
 
 // announcement validations
@@ -138,6 +185,8 @@ export {
   userLoginValidator,
   generateApiKeyValidator,
   changeUserRoleValidator,
+  createCourseValidator,
+  createMaterialValidator,
   createAnnounceValidator,
   createResultsValidator,
 };

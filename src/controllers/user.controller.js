@@ -10,6 +10,7 @@ import {
 } from "../utils/cloudinary.js";
 import { generateAccessAndRefreshToken } from "../utils/accessRefreshToken.js";
 import crypto from "crypto";
+import { ApiKeyStatusEnum } from "../constants.js";
 
 const registerUser = asyncHandler(async (req, res) => {
   const { username, fullName, email, password, role } = req.body;
@@ -170,6 +171,16 @@ const generateApiKey = asyncHandler(async (req, res) => {
     const { expiresAt } = req.body;
     const key = crypto.randomBytes(32).toString("hex");
 
+    // const exisitingKey = await ApiKey.findOne({
+    //   createdBy: user?._id,
+    //   status: ApiKeyStatusEnum.ACTIVE,
+    //   expiresAt: null,
+    // })
+
+    // if(exisitingKey) {
+
+    // }
+
     const apiKey = await ApiKey.create({
       key,
       expiresAt,
@@ -178,7 +189,7 @@ const generateApiKey = asyncHandler(async (req, res) => {
 
     const createdKey = await ApiKey.findById(apiKey?._id)
       .select("-expiresAt")
-      .populate("createdBy", "fullName email username");
+      .populate("createdBy", "fullName image username");
 
     if (!createdKey) {
       throw new ApiError(500, "Problem while creating apiKey");

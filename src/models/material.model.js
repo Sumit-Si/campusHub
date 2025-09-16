@@ -6,7 +6,6 @@ const materialSchema = new Schema(
       type: String,
       required: true,
       trim: true,
-      lowercase: true,
     },
     description: {
       type: String,
@@ -24,22 +23,31 @@ const materialSchema = new Schema(
         type: String,
       },
     ],
-    published: { type: Boolean, default: true },
-    userId: {
+    published: {
+      type: Boolean,
+      default: true,
+    },
+    uploadedBy: {
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
-    courseId: {
+    course: {
       type: Schema.Types.ObjectId,
       ref: "Course",
       required: true,
+    },
+    deletedAt: {
+      type: Date,
     },
   },
   {
     timestamps: true,
   },
 );
+
+materialSchema.index({name: 1});
+materialSchema.index({course: 1});
 
 const Material = new mongoose.model("Material", materialSchema);
 

@@ -3,25 +3,61 @@ import Course from "../models/course.model.js";
 import Material from "../models/material.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
-import { deleteFromCloudinary, uploadOnCloudinary } from "../utils/cloudinary.js";
+import {
+  deleteFromCloudinary,
+  uploadOnCloudinary,
+} from "../utils/cloudinary.js";
 
 const getCourses = asyncHandler(async (req, res) => {
-  const courses = await Course.find().populate("materials" ,"name uploadFiles tags published");
+  const { page = 1, limit = 10 } = req.query;
 
-  if (!courses) {
+  if (page <= 0) page = 1;
+  if (limit <= 0 || limit >= 50) {
+    limit = 10;
+  }
+
+  const skip = (page - 1) * limit;
+
+  const courses = await Course.find({
+    deletedAt: null,
+  })
+    .populate("materials", "name uploadFiles tags published")
+    .skip(skip)
+    .limit(limit);
+
+  if (!courses || courses?.length === 0) {
     throw new ApiError(400, "Courses not exist");
   }
 
-  res
-    .status(200)
-    .json(new ApiResponse(200, courses, "Courses fetched successfully"));
+  const totalCourses = await Course.countDocuments({
+    deletedAt: null,
+  });
+  const totalPages = Math.ceil(totalCourses / limit);
+
+  res.status(200).json(
+    new ApiResponse(
+      200,
+      {
+        courses,
+        metadata: {
+          totalPages,
+          currentPage: page,
+          currentLimit: limit,
+        },
+      },
+      "Courses fetched successfully",
+    ),
+  );
 });
 
 const createCourse = asyncHandler(async (req, res) => {
+  const userId = req.user?._id;
   const { name, description, price } = req.body;
 
   const existingCourse = await Course.findOne({
     name,
+    createdBy: userId,
+    deletedAt: null,
   });
 
   if (existingCourse) {
@@ -32,16 +68,16 @@ const createCourse = asyncHandler(async (req, res) => {
     name,
     description,
     price,
-    userId: req.user?._id,
+    createdBy: userId,
   });
 
   const createdCourse = await Course.findById(course?._id).populate(
-    "userId",
-    "username fullName email",
+    "createdBy",
+    "username fullName image",
   );
 
   if (!createdCourse) {
-    throw new ApiError(500, "Something went wrong while creating course");
+    throw new ApiError(500, "Problem while creating course");
   }
 
   res
@@ -57,7 +93,6 @@ const getMaterialsByCourseId = asyncHandler(async (req, res) => {
   }
 
   const course = await Course.findById(courseId).populate("materials");
-
 
   if (!course) {
     throw new ApiError(400, "Course not exists");
@@ -75,7 +110,11 @@ const addMaterialsByCourseId = asyncHandler(async (req, res) => {
   const { courseId } = req.params;
   const userId = req.user?._id;
 
-  const existingMaterial = await Material.findOne({ name, courseId });
+  const existingMaterial = await Material.findOne({
+    name,
+    courseId,
+    deletedAt: null,
+  });
 
   if (existingMaterial) {
     throw new ApiError(400, "Course material already exists");
@@ -84,18 +123,17 @@ const addMaterialsByCourseId = asyncHandler(async (req, res) => {
   let uploadResults = [];
   try {
     uploadResults = await Promise.all(
-      req.files?.map(file => uploadOnCloudinary(file.path))
+      req.files?.map((file) => uploadOnCloudinary(file.path)),
     );
   } catch (error) {
     throw new ApiError(400, "Failed to upload files");
   }
 
-  const results = uploadResults.map(file => ({
-    fileUrl: file?.secure_url,
+  const results = uploadResults.map((file) => ({
+    fileUrl: file?.url,
     fileType: file?.resource_type,
     size: file?.bytes,
   }));
-
 
   try {
     const material = await Material.create({
@@ -103,30 +141,45 @@ const addMaterialsByCourseId = asyncHandler(async (req, res) => {
       description,
       uploadFiles: results,
       tags: typeof tags === "string" ? JSON.parse(tags) : tags,
-      userId,
-      courseId,
+      uploadedBy: userId,
+      course: courseId,
     });
 
-    await Course.findByIdAndUpdate(courseId, { $push: { materials: material._id } });
+    await Course.findByIdAndUpdate(courseId, {
+      $push: { materials: material._id },
+    });
 
-    res.status(201).json(
-      new ApiResponse(200, material, "Course material added successfully")
-    );
+    const createdMaterial = await Material.findById(material?._id)
+      .populate("uploadedBy", "username fullName image")
+      .populate("course", "name price");
+
+    if (!createdMaterial) {
+      throw new ApiError(500, "Problem while creating material");
+    }
+
+    res
+      .status(201)
+      .json(
+        new ApiResponse(
+          200,
+          createdMaterial,
+          "Course material added successfully",
+        ),
+      );
   } catch (error) {
     await Promise.all(
-      results.map(async file => {
+      results.map(async (file) => {
         if (file.publicId) {
           await deleteFromCloudinary(file.publicId);
         }
-      })
+      }),
     );
     throw new ApiError(
       500,
-      "Something went wrong while adding the material; uploaded files were deleted"
+      "Problem while adding material and uploaded files were deleted",
     );
   }
 });
-
 
 export {
   getCourses,

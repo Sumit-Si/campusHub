@@ -1,7 +1,13 @@
 import { Router } from "express";
-import { checkApiKey, checkRole, verifyJWT } from "../middlewares/auth.middleware.js";
+import {
+  checkApiKey,
+  checkRole,
+  verifyJWT,
+} from "../middlewares/auth.middleware.js";
 import { AvailableUserRoles, UserRolesEnum } from "../constants.js";
-import {upload} from "../middlewares/multer.middleware.js";
+import { createCourseValidator, createMaterialValidator } from "../validators/index.js";
+import { validate } from "../middlewares/validator.middleware.js";
+import { upload } from "../middlewares/multer.middleware.js";
 import {
   addMaterialsByCourseId,
   createCourse,
@@ -13,8 +19,15 @@ const router = Router();
 
 router
   .route("/")
-  .get(verifyJWT,checkApiKey, checkRole(AvailableUserRoles), getCourses)
-  .post(verifyJWT,checkApiKey, checkRole([UserRolesEnum.ADMIN]), createCourse);
+  .get(verifyJWT, checkApiKey, checkRole(AvailableUserRoles), getCourses)
+  .post(
+    verifyJWT,
+    checkApiKey,
+    checkRole([UserRolesEnum.ADMIN]),
+    createCourseValidator(),
+    validate,
+    createCourse,
+  );
 
 router
   .route("/:courseId/materials")
@@ -24,6 +37,14 @@ router
     checkRole([UserRolesEnum.FACULTY, UserRolesEnum.STUDENT]),
     getMaterialsByCourseId,
   )
-  .post(verifyJWT,checkApiKey, checkRole([UserRolesEnum.FACULTY]),upload.array("uploadFiles",3), addMaterialsByCourseId);
+  .post(
+    verifyJWT,
+    checkApiKey,
+    checkRole([UserRolesEnum.FACULTY]),
+    upload.array("uploadFiles", 3),
+    createMaterialValidator(),
+    validate,
+    addMaterialsByCourseId,
+  );
 
 export default router;
