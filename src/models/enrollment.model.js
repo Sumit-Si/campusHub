@@ -1,22 +1,27 @@
 import mongoose, { Schema } from "mongoose";
+import {
+  AvailableEnrollStatus,
+  AvailableUserRoles,
+  EnrollStatusEnum,
+  UserRolesEnum,
+} from "../constants.js";
 
 const enrollmentSchema = new Schema(
   {
-    userId: {
+    user: {
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
-    courseId: {
+    course: {
       type: Schema.Types.ObjectId,
       ref: "Course",
       required: true,
     },
     role: {
       type: String,
-      enum: ["student", "faculty", "admin", "ta"],
-      required: true,
-      index: true,
+      enum: AvailableUserRoles,
+      default: UserRolesEnum.STUDENT,
     },
     enrolledAt: {
       type: Date,
@@ -24,8 +29,8 @@ const enrollmentSchema = new Schema(
     },
     status: {
       type: String,
-      enum: ["active", "completed", "dropped"],
-      default: "active",
+      enum: AvailableEnrollStatus,
+      default: EnrollStatusEnum.ACTIVE,
     },
     remarks: {
       type: String,
@@ -35,6 +40,8 @@ const enrollmentSchema = new Schema(
     timestamps: true,
   },
 );
+
+enrollmentSchema.index({ user: 1, course: 1 }, { unique: true }); // each user can have at most one enrollment per course
 
 const Enrollment = new mongoose.model("Enrollment", enrollmentSchema);
 

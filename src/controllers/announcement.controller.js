@@ -58,10 +58,9 @@ const createAnnouncement = asyncHandler(async (req, res) => {
     expireAt: expireTime,
   });
 
-  const createdAnnouncement = await Announcement.findById(
-    announcement?._id,
-  ).populate("userId", "fullName email")
-   .populate("courseId","name");
+  const createdAnnouncement = await Announcement.findById(announcement?._id)
+    .populate("userId", "fullName email")
+    .populate("courseId", "name");
 
   if (!createdAnnouncement) {
     throw new ApiError(500, "Something went wrong while creating announcement");
@@ -79,6 +78,5 @@ const createAnnouncement = asyncHandler(async (req, res) => {
       ),
     );
 });
-
 
 export { getAnnouncements, createAnnouncement };

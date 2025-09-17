@@ -29,17 +29,19 @@ app.use(cookieParser());
 import healthCheckRouter from "./routes/healthcheck.routes.js";
 import userRouter from "./routes/user.routes.js";
 import adminRouter from "./routes/admin.routes.js"
-import CourseRouter from "./routes/course.routes.js"
-import AnnouncementRouter from "./routes/announcement.routes.js";
-import ResultRouter from "./routes/result.routes.js"
+import courseRouter from "./routes/course.routes.js"
+import announcementRouter from "./routes/announcement.routes.js";
+import resultRouter from "./routes/result.routes.js"
+import enrollmentRouter from "./routes/enrollment.routes.js";
 
 
 app.use("/api/v1/healthCheck",healthCheckRouter);
 app.use("/api/v1/users",userRouter);
 app.use("/api/v1/admin",adminRouter);
-app.use("/api/v1/courses",CourseRouter);
-app.use("/api/v1/announcements",AnnouncementRouter);
-app.use("/api/v1/results",ResultRouter);
+app.use("/api/v1/courses",courseRouter);
+app.use("/api/v1/announcements",announcementRouter);
+app.use("/api/v1/results",resultRouter);
+app.use("/api/v1/enrollments", enrollmentRouter);
 
 
 export default app;

@@ -16,6 +16,7 @@ const materialSchema = new Schema(
         fileUrl: { type: String, required: true },
         fileType: { type: String, required: true },
         size: Number,
+        publicId: { type: String, required: true },
       },
     ],
     tags: [
@@ -46,8 +47,8 @@ const materialSchema = new Schema(
   },
 );
 
-materialSchema.index({name: 1});
-materialSchema.index({course: 1});
+materialSchema.index({ name: 1 });
+materialSchema.index({ course: 1 });
 
 const Material = new mongoose.model("Material", materialSchema);
 

@@ -1,5 +1,5 @@
 import { body } from "express-validator";
-import { AvailableUserRoles } from "../constants.js";
+import { AvailableUserRoles, UserRolesEnum } from "../constants.js";
 
 // auth validations
 const userRegisterValidator = () => {
@@ -66,13 +66,14 @@ const userLoginValidator = () => {
 const generateApiKeyValidator = () => {
   return [
     body("expiresAt")
-      .optional({values: "falsy"})  // -> skips: undefined, null, '', 0, false
+      .optional({ values: "falsy" }) // -> skips: undefined, null, '', 0, false
       .trim()
       .isISO8601()
       .withMessage("ExpiresAt must be a valid iso date"),
-  ]
-}
+  ];
+};
 
+// admin validations
 const changeUserRoleValidator = () => {
   return [
     body("role")
@@ -86,7 +87,6 @@ const changeUserRoleValidator = () => {
   ];
 };
 
-
 // course validations
 const createCourseValidator = () => {
   return [
@@ -94,13 +94,13 @@ const createCourseValidator = () => {
       .trim()
       .notEmpty()
       .withMessage("Name is required")
-      .isLength({min: 5,max: 100})
+      .isLength({ min: 5, max: 100 })
       .withMessage("Name must be 5-100 characters"),
 
     body("description")
       .trim()
       .optional()
-      .isLength({min: 20, max: 5000})
+      .isLength({ min: 20, max: 5000 })
       .withMessage("Description must be 20-5000 characters"),
 
     body("price")
@@ -109,8 +109,8 @@ const createCourseValidator = () => {
       .withMessage("Price is required")
       .isInt()
       .withMessage("Price must be a number"),
-  ]
-}
+  ];
+};
 
 const createMaterialValidator = () => {
   return [
@@ -118,21 +118,46 @@ const createMaterialValidator = () => {
       .trim()
       .notEmpty()
       .withMessage("Name is required")
-      .isLength({min: 5, max: 200})
+      .isLength({ min: 5, max: 200 })
       .withMessage("Name must be 5-200 characters"),
 
     body("description")
       .trim()
       .optional()
-      .isLength({min: 20, max: 1000})
+      .isLength({ min: 20, max: 1000 })
       .withMessage("Description must be 20-1000 characters"),
 
-    body("tags")
-      .trim()
-      .optional(),
-  ]
-}
+    body("tags").trim().optional(),
+  ];
+};
 
+// enrollment validation
+const createEnrolledValidator = () => {
+  return [
+    body("courseId")
+      .trim()
+      .notEmpty()
+      .withMessage("CourseId is required")
+      .isMongoId()
+      .withMessage("CourseId must be a mongoId"),
+
+    body("role")
+      .trim()
+      .optional()
+      .isIn([UserRolesEnum.ADMIN, UserRolesEnum.STUDENT])
+      .withMessage("Role must be either admin or student"),
+
+    body("remarks")
+      .trim()
+      .optional()
+      .isLength({ min: 10, max: 200 })
+      .withMessage("Remarks must be 10-200 characters"),
+  ];
+};
+
+const updateEnrolledValidator = () => {
+  return [];
+};
 
 // announcement validations
 const createAnnounceValidator = () => {
@@ -160,7 +185,6 @@ const createAnnounceValidator = () => {
   ];
 };
 
-
 // result validations
 const createResultsValidator = () => {
   return [
@@ -187,6 +211,8 @@ export {
   changeUserRoleValidator,
   createCourseValidator,
   createMaterialValidator,
+  createEnrolledValidator,
+  updateEnrolledValidator,
   createAnnounceValidator,
   createResultsValidator,
 };

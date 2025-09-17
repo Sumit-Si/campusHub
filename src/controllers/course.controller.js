@@ -87,22 +87,47 @@ const createCourse = asyncHandler(async (req, res) => {
 
 const getMaterialsByCourseId = asyncHandler(async (req, res) => {
   const { courseId } = req.params;
+  const { page = 1, limit = 10 } = req.query;
 
-  if (!courseId) {
-    throw new ApiError(400, "CourseId is missing");
+  if (page <= 0) page = 1;
+  if (limit <= 0 || limit >= 50) {
+    limit = 10;
   }
 
-  const course = await Course.findById(courseId).populate("materials");
+  const skip = (page - 1) * limit;
 
-  if (!course) {
+  const course = await Course.findOne({
+    _id: courseId,
+    deletedAt: null,
+  })
+    .populate("materials")
+    .populate("createdBy", "username fullName avatar")
+    .skip(skip)
+    .limit(limit);
+
+  if (!course || course?.length === 0) {
     throw new ApiError(400, "Course not exists");
   }
 
-  res
-    .status(200)
-    .json(
-      new ApiResponse(200, course, "Course materials fetched successfully"),
-    );
+  const totalCourses = await Course.countDocuments({
+    deletedAt: null,
+  });
+  const totalPages = Math.ceil(totalCourses / limit);
+
+  res.status(200).json(
+    new ApiResponse(
+      200,
+      {
+        course,
+        metadata: {
+          totalPages,
+          currentPage: page,
+          currentLimit: limit,
+        },
+      },
+      "Course materials fetched successfully",
+    ),
+  );
 });
 
 const addMaterialsByCourseId = asyncHandler(async (req, res) => {
@@ -112,7 +137,7 @@ const addMaterialsByCourseId = asyncHandler(async (req, res) => {
 
   const existingMaterial = await Material.findOne({
     name,
-    courseId,
+    course: courseId,
     deletedAt: null,
   });
 
@@ -123,16 +148,17 @@ const addMaterialsByCourseId = asyncHandler(async (req, res) => {
   let uploadResults = [];
   try {
     uploadResults = await Promise.all(
-      req.files?.map((file) => uploadOnCloudinary(file.path)),
+      req.files.map((file) => uploadOnCloudinary(file.path)),
     );
   } catch (error) {
     throw new ApiError(400, "Failed to upload files");
   }
 
   const results = uploadResults.map((file) => ({
-    fileUrl: file?.url,
+    fileUrl: file?.secure_url,
     fileType: file?.resource_type,
     size: file?.bytes,
+    publicId: file?.public_id,
   }));
 
   try {
@@ -145,9 +171,17 @@ const addMaterialsByCourseId = asyncHandler(async (req, res) => {
       course: courseId,
     });
 
-    await Course.findByIdAndUpdate(courseId, {
-      $push: { materials: material._id },
-    });
+    const updatedCourse = await Course.findByIdAndUpdate(
+      courseId,
+      {
+        $push: { materials: material._id },
+      },
+      { new: true },
+    );
+
+    if (!updatedCourse) {
+      throw new ApiError(404, "Course not found");
+    }
 
     const createdMaterial = await Material.findById(material?._id)
       .populate("uploadedBy", "username fullName image")
@@ -161,7 +195,7 @@ const addMaterialsByCourseId = asyncHandler(async (req, res) => {
       .status(201)
       .json(
         new ApiResponse(
-          200,
+          201,
           createdMaterial,
           "Course material added successfully",
         ),
@@ -176,7 +210,7 @@ const addMaterialsByCourseId = asyncHandler(async (req, res) => {
     );
     throw new ApiError(
       500,
-      "Problem while adding material and uploaded files were deleted",
+      error.message || "Problem while adding material and uploaded files were deleted",
     );
   }
 });

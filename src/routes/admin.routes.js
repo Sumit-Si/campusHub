@@ -10,6 +10,12 @@ router.route("/users").get(verifyJWT, checkRole(["admin"]), getUsers);
 
 router
   .route("/users/:id/role")
-  .put(verifyJWT,checkRole(["admin"]), changeUserRoleValidator(), validate, changeUserRole);
+  .put(
+    verifyJWT,
+    checkRole(["admin"]),
+    changeUserRoleValidator(),
+    validate,
+    changeUserRole,
+  );
 
 export default router;

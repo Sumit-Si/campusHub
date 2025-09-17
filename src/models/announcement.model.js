@@ -17,14 +17,13 @@ const announcementSchema = new Schema(
       ref: "User",
       required: true,
     },
-    courseId: {
+    course: {
       type: Schema.Types.ObjectId,
       ref: "Course",
     },
     attachments: [
       {
         type: String,
-        
       },
     ],
     status: {
@@ -37,7 +36,7 @@ const announcementSchema = new Schema(
       enum: ["all", "admins", "faculty", "students"],
       default: "all",
     },
-    expireAt: {
+    deletedAt: {
       type: Date,
     },
   },
@@ -46,8 +45,6 @@ const announcementSchema = new Schema(
   },
 );
 
-// TTL index for auto expiration
-announcementSchema.index({ expireAt: 1 }, { expireAfterSeconds: 0 });
 
 const Announcement = new mongoose.model("Announcement", announcementSchema);
 
