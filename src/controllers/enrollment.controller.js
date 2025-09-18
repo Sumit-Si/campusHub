@@ -6,7 +6,10 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
 const getEnrollments = asyncHandler(async (req, res) => {
-  const { page = 1, limit = 10, status = EnrollStatusEnum.ACTIVE } = req.query;
+  let { page = 1, limit = 10, status } = req.query;
+
+  page = parseInt(page);
+  limit = parseInt(limit);
 
   if (page <= 0) page = 1;
   if (limit <= 0 || limit >= 50) {
@@ -23,11 +26,8 @@ const getEnrollments = asyncHandler(async (req, res) => {
     .skip(skip)
     .limit(limit);
 
-  if (!enrollments || enrollments?.length === 0) {
-    throw new ApiError(404, "Enrollments not exist");
-  }
 
-  const totalEnrollments = await Course.countDocuments();
+  const totalEnrollments = await Enrollment.countDocuments();
   const totalPages = Math.ceil(totalEnrollments / limit);
 
   res.status(200).json(
@@ -47,6 +47,7 @@ const getEnrollments = asyncHandler(async (req, res) => {
 });
 
 const createEnrollment = asyncHandler(async (req, res) => {
+
   const { courseId, role, remarks } = req.body;
   const userId = req.user?._id;
 
@@ -111,26 +112,61 @@ const getEnrollmentById = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, enrollment, "Enrollment fetched successfully"));
 });
 
-const updateEnrollmentById = asyncHandler(async (req, res) => {});
+const updateEnrollmentById = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { remarks, status } = req.body || {};
 
-const deleteEnrollmentById = asyncHandler(async (req, res) => {
-    const {id} = req.params;
+  const existing = await Enrollment.findById(id);
 
-    const existing = await Enrollment.findById(id);
+  if (!existing) {
+    throw new ApiError(404, "Enrollment not exists");
+  }
 
-    if(!existing) {
-        throw new ApiError(404, "Enrollment not exists");
-    }
+  const updateData = {}
+  if(status !== undefined) updateData.status = status;
+  if(remarks !== undefined) updateData.remarks = remarks;
 
-    // const enrollment = await Enrollment.findByIdAnd(id);
+  const updateEnrollment = await Enrollment.findByIdAndUpdate(
+    id,
+    updateData,
+    { new: true },
+  );
 
+  if (!updateEnrollment) {
+    throw new ApiError(500, "Problem while updating enrollment");
+  }
 
+  res
+    .status(200)
+    .json(
+      new ApiResponse(200, updateEnrollment, "Enrollment updated successfully"),
+    );
 });
 
-const getCurrentEnrollment = asyncHandler(async (req, res) => {
-//   const currentEnrollment = await Enrollment.findOne({
-//     user: req.user?._id,
-//   });
+const deleteEnrollmentById = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  const existing = await Enrollment.findById(id);
+
+  if (!existing) {
+    throw new ApiError(404, "Enrollment not exists");
+  }
+
+  const deletedEnrollment = await Enrollment.findByIdAndDelete(id);
+
+  if (!deletedEnrollment) {
+    throw new ApiError(500, "Problem while deleting enrollment");
+  }
+
+  res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        deletedEnrollment,
+        "Enrollment deleted successfully",
+      ),
+    );
 });
 
 export {
@@ -139,5 +175,4 @@ export {
   getEnrollmentById,
   updateEnrollmentById,
   deleteEnrollmentById,
-  getCurrentEnrollment,
 };

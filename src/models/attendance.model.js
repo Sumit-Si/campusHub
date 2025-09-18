@@ -1,25 +1,26 @@
 import mongoose, { Schema } from "mongoose";
+import { AttendaceStatusEnum, AvailableAttendanceStatus } from "../constants";
 
 const attendanceSchema = new Schema(
   {
-    userId: {
+    user: {
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
-    courseId: {
+    course: {
       type: Schema.Types.ObjectId,
       ref: "Course",
       required: true,
     },
     sessionDate: {
       type: Date,
-      required: true,
+      default: Date.now
     },
     status: {
       type: String,
-      enum: ["present", "absent"],
-      default: "present",
+      enum: AvailableAttendanceStatus,
+      default: AttendaceStatusEnum.PRESENT,
     },
     markedBy: {
       type: Schema.Types.ObjectId,
@@ -30,6 +31,8 @@ const attendanceSchema = new Schema(
     timestamps: true,
   },
 );
+
+attendanceSchema.index({user: 1, course: 1, sessionDate: 1}, {unique: true});
 
 const Attendance = new mongoose.model("Attendance", attendanceSchema);
 

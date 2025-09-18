@@ -10,7 +10,7 @@ import {
   createEnrolledValidator,
   updateEnrolledValidator,
 } from "../validators/index.js";
-import { createEnrollment, deleteEnrollmentById, getCurrentEnrollment, getEnrollmentById, getEnrollments, updateEnrollmentById } from "../controllers/enrollment.controller.js";
+import { createEnrollment, deleteEnrollmentById, getEnrollmentById, getEnrollments, updateEnrollmentById } from "../controllers/enrollment.controller.js";
 
 const router = Router();
 
@@ -43,7 +43,5 @@ router
     checkRole([UserRolesEnum.ADMIN, UserRolesEnum.STUDENT]),
     deleteEnrollmentById,
   );
-
-router.route("/my").get(verifyJWT, checkApiKey, getCurrentEnrollment);
 
 export default router;

@@ -5,7 +5,10 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
 const getUsers = asyncHandler(async (req, res) => {
-  const { page = 1, limit = 10 } = req.query;
+  let { page = 1, limit = 10 } = req.query;
+
+  page = parseInt(page);
+  limit = parseInt(limit);
 
   if (page <= 0) page = 1;
   if (limit <= 0 || limit >= 50) {
@@ -18,10 +21,6 @@ const getUsers = asyncHandler(async (req, res) => {
     .select("-password -refreshToken")
     .skip(skip)
     .limit(limit);
-
-  if (!users || users?.length === 0) {
-    throw new ApiError(400, "Users not exist");
-  }
 
   const totalUsers = await User.countDocuments();
   const totalPages = Math.ceil(totalUsers / limit);
@@ -46,15 +45,15 @@ const changeUserRole = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const { role } = req.body;
 
-  const user = await User.findById(id)
-    .select("-password -refreshToken");
+  const user = await User.findById(id).select("-password -refreshToken");
 
   if (!user) {
     throw new ApiError(400, "User not exists");
   }
 
-  if(req.user?._id.equals(id) && role !== UserRolesEnum.ADMIN) {    // recommended: .equals to check for mongoose id equal to params id rather than === which check for only string and not working with MongooseId when checking with string id from params.
-    throw new ApiError(400, "Admin cannot change their role")
+  if (req.user?._id.equals(id) && role !== UserRolesEnum.ADMIN) {
+    // recommended: .equals to check for mongoose id equal to params id rather than === which check for only string and not working with MongooseId when checking with string id from params.
+    throw new ApiError(400, "Admin cannot change their role");
   }
 
   const updatedUser = await User.findByIdAndUpdate(

@@ -1,5 +1,9 @@
 import { body } from "express-validator";
-import { AvailableUserRoles, UserRolesEnum } from "../constants.js";
+import {
+  AvailableEnrollStatus,
+  AvailableUserRoles,
+  UserRolesEnum,
+} from "../constants.js";
 
 // auth validations
 const userRegisterValidator = () => {
@@ -156,8 +160,29 @@ const createEnrolledValidator = () => {
 };
 
 const updateEnrolledValidator = () => {
-  return [];
+  return [
+    body("remarks")
+      .trim()
+      .optional()
+      .isLength({ min: 10, max: 200 })
+      .withMessage("Remarks must be 10-200 characters"),
+
+    body("status")
+      .trim()
+      .optional()
+      .isIn(AvailableEnrollStatus)
+      .withMessage("Status must be of: completed, active or dropped"),
+  ];
 };
+
+// attendance validations
+const createAttendanceValidator = () => {
+  return []
+}
+
+const updateAttendanceByIdValidator = () => {
+  return []
+}
 
 // announcement validations
 const createAnnounceValidator = () => {
@@ -213,6 +238,8 @@ export {
   createMaterialValidator,
   createEnrolledValidator,
   updateEnrolledValidator,
+  createAttendanceValidator,
+  updateAttendanceByIdValidator,
   createAnnounceValidator,
   createResultsValidator,
 };

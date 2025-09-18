@@ -11,6 +11,7 @@ import { upload } from "../middlewares/multer.middleware.js";
 import {
   addMaterialsByCourseId,
   createCourse,
+  getEnrolledUsers,
   getCourses,
   getMaterialsByCourseId,
 } from "../controllers/course.controller.js";
@@ -46,5 +47,10 @@ router
     validate,
     addMaterialsByCourseId,
   );
+
+  // enrolled route
+  router
+    .route("/:courseId/enrollments")
+    .get(verifyJWT, checkApiKey, checkRole([UserRolesEnum.ADMIN,UserRolesEnum.FACULTY]), getEnrolledUsers)
 
 export default router;

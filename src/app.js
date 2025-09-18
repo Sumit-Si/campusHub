@@ -33,6 +33,7 @@ import courseRouter from "./routes/course.routes.js"
 import announcementRouter from "./routes/announcement.routes.js";
 import resultRouter from "./routes/result.routes.js"
 import enrollmentRouter from "./routes/enrollment.routes.js";
+import attendanceRouter from "./routes/attendance.routes.js";
 
 
 app.use("/api/v1/healthCheck",healthCheckRouter);
@@ -42,6 +43,7 @@ app.use("/api/v1/courses",courseRouter);
 app.use("/api/v1/announcements",announcementRouter);
 app.use("/api/v1/results",resultRouter);
 app.use("/api/v1/enrollments", enrollmentRouter);
+app.use("/api/v1/attendance", attendanceRouter);
 
 
 export default app;

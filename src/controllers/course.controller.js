@@ -1,5 +1,6 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import Course from "../models/course.model.js";
+import Enrollment from "../models/enrollment.model.js";
 import Material from "../models/material.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
@@ -210,9 +211,63 @@ const addMaterialsByCourseId = asyncHandler(async (req, res) => {
     );
     throw new ApiError(
       500,
-      error.message || "Problem while adding material and uploaded files were deleted",
+      error.message ||
+        "Problem while adding material and uploaded files were deleted",
     );
   }
+});
+
+const getEnrolledUsers = asyncHandler(async (req, res) => {
+  const { courseId } = req.params;
+  let { page = 1, limit = 10 } = req.query;
+
+  page = parseInt(page);
+  limit = parseInt(limit);
+
+  if (page <= 0) page = 1;
+  if (limit <= 0 || limit >= 50) {
+    limit = 10;
+  }
+
+  const skip = (page - 1) * limit;
+
+  const course = await Course.findOne({
+    _id: courseId,
+    deletedAt: null,
+  });
+
+  if (!course) {
+    throw new ApiError(404, "Course not exists");
+  }
+
+  const enrolledUsers = await Enrollment.find({
+    course: courseId,
+  })
+    .populate("user", "username fullName image")
+    .populate("course", "name price")
+    .skip(skip)
+    .limit(limit);
+
+
+  const totalEnrollment = await Enrollment.countDocuments({
+    course: courseId,
+  });
+  const totalPages = Math.ceil(totalEnrollment / limit);
+
+  res.status(200).json(
+    new ApiResponse(
+      200,
+      {
+        enrolledUsers,
+        metadata: {
+          totalPages,
+          currentPage: page,
+          currentLimit: limit,
+        },
+      },
+      "Enrollments fetched successfully",
+    ),
+  );
 });
 
 export {
@@ -220,4 +275,5 @@ export {
   createCourse,
   addMaterialsByCourseId,
   getMaterialsByCourseId,
+  getEnrolledUsers,
 };

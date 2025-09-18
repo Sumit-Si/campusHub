@@ -35,6 +35,9 @@ const enrollmentSchema = new Schema(
     remarks: {
       type: String,
     },
+    deletedAt: {
+      type: Date,
+    },
   },
   {
     timestamps: true,
