@@ -1,5 +1,6 @@
 import { body } from "express-validator";
 import {
+  AvailableAttendanceStatus,
   AvailableEnrollStatus,
   AvailableUserRoles,
   UserRolesEnum,
@@ -177,12 +178,44 @@ const updateEnrolledValidator = () => {
 
 // attendance validations
 const createAttendanceValidator = () => {
-  return []
-}
+  return [
+    body("attendanceRecords")
+      .isArray({ min: 1 })
+      .withMessage("AttendanceRecords must be a non empty array")
+      .exists()
+      .withMessage("AttendanceRecords is required"),
+
+    body("attendanceRecords.*.userId")
+      .trim()
+      .notEmpty()
+      .withMessage("UserId is required")
+      .isMongoId()
+      .withMessage("UserId must be a valid mongoId"),
+
+    body("attendanceRecords.*.courseId")
+      .trim()
+      .notEmpty()
+      .withMessage("CourseId is required")
+      .isMongoId()
+      .withMessage("CourseId must be a valid mongoId"),
+
+    body("attendanceRecords.*.status")
+      .optional()
+      .trim()
+      .isIn(AvailableAttendanceStatus)
+      .withMessage("Status must be either present or absent"),
+
+    body("attendanceRecords.*.sessionDate")
+      .trim()
+      .optional()
+      .isISO8601()
+      .withMessage("sessionDate must be a valid iso date"),
+  ];
+};
 
 const updateAttendanceByIdValidator = () => {
-  return []
-}
+  return [];
+};
 
 // announcement validations
 const createAnnounceValidator = () => {

@@ -1,5 +1,5 @@
 import mongoose, { Schema } from "mongoose";
-import { AttendaceStatusEnum, AvailableAttendanceStatus } from "../constants";
+import { AttendaceStatusEnum, AvailableAttendanceStatus } from "../constants.js";
 
 const attendanceSchema = new Schema(
   {
