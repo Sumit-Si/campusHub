@@ -185,14 +185,14 @@ const createAttendanceValidator = () => {
       .exists()
       .withMessage("AttendanceRecords is required"),
 
-    body("attendanceRecords.*.userId")
+    body("attendanceRecords.*.user")
       .trim()
       .notEmpty()
       .withMessage("UserId is required")
       .isMongoId()
       .withMessage("UserId must be a valid mongoId"),
 
-    body("attendanceRecords.*.courseId")
+    body("attendanceRecords.*.course")
       .trim()
       .notEmpty()
       .withMessage("CourseId is required")
@@ -214,7 +214,13 @@ const createAttendanceValidator = () => {
 };
 
 const updateAttendanceByIdValidator = () => {
-  return [];
+  return [
+    body("status")
+      .optional()
+      .trim()
+      .isIn(AvailableAttendanceStatus)
+      .withMessage("Status must be either present or absent"),
+  ];
 };
 
 // announcement validations

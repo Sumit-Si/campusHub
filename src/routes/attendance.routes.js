@@ -58,7 +58,7 @@ router
   );
 
 router
-  .route("/course/:courseId/session/:date")
+  .route("/course/:courseId/session/:sessionDate")
   .get(
     verifyJWT,
     checkApiKey,
