@@ -252,19 +252,40 @@ const createAnnounceValidator = () => {
 // result validations
 const createResultsValidator = () => {
   return [
-    body()
+    body("results")
       .isArray({ max: 30 })
-      .withMessage("Request body should be an array and maximum be 30"),
+      .withMessage("Results should be an array and maximum be 30")
+      .exists()
+      .withMessage("Results is required"),
 
-    body("*.studentId").trim().notEmpty().withMessage("StudentId is required"),
+    body("results.*.student")
+      .trim()
+      .notEmpty()
+      .withMessage("StudentId is required")
+      .isMongoId()
+      .withMessage("StudentId must be a valid mongoId"),
 
-    body("*.courseId").trim().notEmpty().withMessage("CourseId is required"),
+    body("results.*.course")
+      .trim()
+      .notEmpty()
+      .withMessage("CourseId is required")
+      .isMongoId()
+      .withMessage("StudentId must be a valid mongoId"),
 
-    body("*.subject").notEmpty().withMessage("Subject is required").trim(),
+    body("results.*.subject")
+      .trim()
+      .notEmpty()
+      .withMessage("Subject is required")
+      .isLength({ min: 3, max: 100 })
+      .withMessage("Subject must be 3-100 characters"),
 
-    body("*.marks").notEmpty().withMessage("Marks is required"),
+    body("results.*.marks").notEmpty().withMessage("Marks is required"),
 
-    body("*.examDate").notEmpty().withMessage("examDate is required"),
+    body("results.*.examDate")
+      .notEmpty()
+      .withMessage("examDate is required")
+      .isISO8601()
+      .withMessage("examDate must be a valid iso date"),
   ];
 };
 

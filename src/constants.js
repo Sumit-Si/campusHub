@@ -27,9 +27,9 @@ export const EnrollStatusEnum = {
 export const AvailableEnrollStatus = Object.values(EnrollStatusEnum);
 
 // ATTENDANCE constants
-export const AttendaceStatusEnum = {
+export const AttendanceStatusEnum = {
     PRESENT: "present",
     ABSENT: "absent",
 }
 
-export const AvailableAttendanceStatus = Object.values(AttendaceStatusEnum);
+export const AvailableAttendanceStatus = Object.values(AttendanceStatusEnum);

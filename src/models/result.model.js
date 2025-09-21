@@ -1,18 +1,16 @@
-import mongoose,{ Schema } from 'mongoose';
+import mongoose, { Schema } from "mongoose";
 
 const resultSchema = new Schema(
   {
-    studentId: {
+    student: {
       type: Schema.Types.ObjectId,
-      ref: 'User',
+      ref: "User",
       required: true,
-      index: true,
     },
-    courseId: {
+    course: {
       type: Schema.Types.ObjectId,
-      ref: 'Course',
+      ref: "Course",
       required: true,
-      index: true,
     },
     subject: {
       type: String,
@@ -29,10 +27,13 @@ const resultSchema = new Schema(
     grade: {
       type: String,
       trim: true,
+      enum: ["O", "A", "B", "C", "D", "E", "F"],
+      required: true,
     },
     examDate: {
       type: Date,
       required: true,
+      index: true,
     },
     remarks: {
       type: String,
@@ -40,14 +41,37 @@ const resultSchema = new Schema(
     },
     createdBy: {
       type: Schema.Types.ObjectId,
-      ref: 'User',
-      required: true, 
+      ref: "User",
+      required: true,
     },
+    semester: {
+      type: String,
+      trim: true,
+      required: true,
+    },
+    academicYear: {
+      type: String,
+      trim: true,
+    },
+    deletedAt: {
+      type: Date,
+    }
   },
   {
     timestamps: true,
-  }
+  },
 );
 
-const Result = mongoose.model('Result', resultSchema);
+resultSchema.index(
+  { student: 1, course: 1, subject: 1, examDate: 1 },
+  { unique: true },
+);
+
+resultSchema.pre("save", async function (next) {
+  if (!this.isModified("examDate")) return next();
+  this.examDate = new Date(this.examDate.setUTCHours(0, 0, 0, 0));
+  next();
+});
+
+const Result = mongoose.model("Result", resultSchema);
 export default Result;

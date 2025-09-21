@@ -1,5 +1,8 @@
 import mongoose, { Schema } from "mongoose";
-import { AttendaceStatusEnum, AvailableAttendanceStatus } from "../constants.js";
+import {
+  AttendanceStatusEnum,
+  AvailableAttendanceStatus,
+} from "../constants.js";
 
 const attendanceSchema = new Schema(
   {
@@ -15,12 +18,12 @@ const attendanceSchema = new Schema(
     },
     sessionDate: {
       type: Date,
-      default: Date.now
+      default: Date.now,
     },
     status: {
       type: String,
       enum: AvailableAttendanceStatus,
-      default: AttendaceStatusEnum.PRESENT,
+      default: AttendanceStatusEnum.PRESENT,
     },
     markedBy: {
       type: Schema.Types.ObjectId,
@@ -32,7 +35,10 @@ const attendanceSchema = new Schema(
   },
 );
 
-attendanceSchema.index({user: 1, course: 1, sessionDate: 1}, {unique: true});
+attendanceSchema.index(
+  { user: 1, course: 1, sessionDate: 1 },
+  { unique: true },
+);
 
 const Attendance = new mongoose.model("Attendance", attendanceSchema);
 
