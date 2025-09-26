@@ -1,5 +1,9 @@
 import { Router } from "express";
-import { checkApiKey, checkRole, verifyJWT } from "../middlewares/auth.middleware.js";
+import {
+  checkApiKey,
+  checkRole,
+  verifyJWT,
+} from "../middlewares/auth.middleware.js";
 import {
   createAnnouncement,
   getAnnouncements,
@@ -13,7 +17,7 @@ const router = Router();
 
 router
   .route("/")
-  .get(verifyJWT,checkApiKey, checkRole(AvailableUserRoles), getAnnouncements)
+  .get(verifyJWT, checkApiKey, checkRole(AvailableUserRoles), getAnnouncements)
   .post(
     verifyJWT,
     checkApiKey,

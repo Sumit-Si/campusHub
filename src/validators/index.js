@@ -233,19 +233,12 @@ const createAnnounceValidator = () => {
       .isLength({ min: 5 })
       .withMessage("Title must be al least 5 characters length"),
 
-    body("message").trim(),
-
-    body("expireAt")
-      .optional()
-      .isISO8601()
-      .withMessage("expireAt must be a valid ISO8601 date string")
-      .custom((value) => {
-        const expireDate = new Date(value);
-        if (expireDate <= new Date()) {
-          throw new Error("expireAt must be a future date/time");
-        }
-        return true;
-      }),
+    body("message")
+      .trim()
+      .notEmpty()
+      .withMessage("Message is required")
+      .isLength({ min: 10, max: 1000 })
+      .withMessage("Message must be 10-1000 characters"),
   ];
 };
 

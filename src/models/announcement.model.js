@@ -1,4 +1,5 @@
 import mongoose, { Schema } from "mongoose";
+import { AnnouncementStatusEnum, AnnouncementTargetEnum, AvailableAnnouncementStatus, AvailableAnnouncementTargetStatus } from "../constants.js";
 
 const announcementSchema = new Schema(
   {
@@ -6,13 +7,13 @@ const announcementSchema = new Schema(
       type: String,
       required: true,
       trim: true,
-      index: true,
     },
     message: {
       type: String,
       trim: true,
+      required: true,
     },
-    userId: {
+    createdBy: {
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
@@ -28,13 +29,13 @@ const announcementSchema = new Schema(
     ],
     status: {
       type: String,
-      enum: ["active", "inactive"],
-      default: "active",
+      enum: AvailableAnnouncementStatus,
+      default: AnnouncementStatusEnum.ACTIVE,
     },
     target: {
       type: String,
-      enum: ["all", "admins", "faculty", "students"],
-      default: "all",
+      enum: AvailableAnnouncementTargetStatus,
+      default: AnnouncementTargetEnum.ALL,
     },
     deletedAt: {
       type: Date,
@@ -45,6 +46,13 @@ const announcementSchema = new Schema(
   },
 );
 
+announcementSchema.index({ title: 1 });
+announcementSchema.index({ status: 1 });
+announcementSchema.index({ target: 1 });
+announcementSchema.index({ course: 1 });
+announcementSchema.index({ target: 1, status: 1, deletedAt: 1 });
+announcementSchema.index({ course: 1, status: 1 });
+announcementSchema.index({ creator: 1, status: 1 });
 
 const Announcement = new mongoose.model("Announcement", announcementSchema);
 
