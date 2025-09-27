@@ -23,7 +23,7 @@ const getAnnouncements = asyncHandler(async (req, res) => {
 
   const Announcements = await Announcement.find()
     .populate("course", "name description")
-    .populate("user", "username fullName image")
+    .populate("createdBy", "username fullName image")
     .skip(skip)
     .limit(limit);
 
@@ -66,38 +66,38 @@ const createAnnouncement = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Course not exists");
   }
 
-  // let uploadResults = [];
+  let uploadResults = [];
 
-  // try {
-  //   uploadResults = await Promise.all(
-  //     req.files?.map((file) => uploadOnCloudinary(file?.path)),
-  //   );
-  // } catch (error) {
-  //   throw new ApiError(400, "Failed to upload files");
-  // }
+  try {
+    uploadResults = await Promise.all(
+      req.files?.map((file) => uploadOnCloudinary(file?.path)),
+    );
+  } catch (error) {
+    throw new ApiError(400, "Failed to upload files");
+  }
 
-  // const attachments = uploadResults
-  //   .map((file) => file?.secure_url)
-  //   .filter((url) => !!url); // !! means if it's value is true then it's result will be true
+  const attachments = uploadResults
+    .map((file) => file?.secure_url)
+    .filter((url) => !!url); // !! means if it's value is true then it's result will be true
 
-  // const announcement = await Announcement.create({
-  //   title,
-  //   message,
-  //   createdBy: userId,
-  //   target,
-  //   course,
-  //   attachments,
-  // });
+  const announcement = await Announcement.create({
+    title,
+    message,
+    createdBy: userId,
+    target,
+    course,
+    attachments,
+  });
 
-  // const createdAnnouncement = await Announcement.findById(announcement?._id)
-  //   .populate("createdBy", "username fullName image")
-  //   .populate("course", "name price");
+  const createdAnnouncement = await Announcement.findById(announcement?._id)
+    .populate("createdBy", "username fullName image")
+    .populate("course", "name price");
 
-  // if (!createdAnnouncement) {
-  //   throw new ApiError(500, "Problem while creating announcement");
-  // }
+  if (!createdAnnouncement) {
+    throw new ApiError(500, "Problem while creating announcement");
+  }
 
-  //TODO: notification system for announcements
+  // notification system for announcements
   let targetToNotify = {};
 
   if (target === "all") {
@@ -122,40 +122,36 @@ const createAnnouncement = asyncHandler(async (req, res) => {
     console.log(enrolledUserIds, "enrolledUsers");
 
     targetToNotify = {
-      ...targetToNotify,
       _id: {
         $in: enrolledUserIds,
       },
     };
   }
 
-  console.log(targetToNotify,"targetToNotify");
-
+  console.log(targetToNotify, "targetToNotify");
 
   // users to notify
   const notifyToUsers = await User.find(targetToNotify).select(
     "username fullName image",
   );
 
-  console.log(notifyToUsers,"notifyToUsers");
-  
+  console.log(notifyToUsers, "notifyToUsers");
 
-  
-  // await sendNotification({
-  //   notifyToUsers,
-  //   message,
-  //   type,
-  // })
+  const notify = await sendNotification(
+    notifyToUsers,
+    message,
+  );
+  console.log(notify, "notify");
 
-  // res
-  //   .status(201)
-  //   .json(
-  //     new ApiResponse(
-  //       201,
-  //       createdAnnouncement,
-  //       "Announcement created successfully",
-  //     ),
-  //   );
+  res
+    .status(201)
+    .json(
+      new ApiResponse(
+        201,
+        createdAnnouncement,
+        "Announcement created successfully",
+      ),
+    );
 });
 
 export { getAnnouncements, createAnnouncement };

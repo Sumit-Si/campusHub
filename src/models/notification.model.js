@@ -2,7 +2,7 @@ import mongoose, { Schema } from "mongoose";
 import {
   AvailableNotificationStatus,
   NotificationStatusEnum,
-} from "../constants";
+} from "../constants.js";
 
 const notificationSchema = new Schema(
   {

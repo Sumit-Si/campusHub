@@ -242,6 +242,18 @@ const createAnnounceValidator = () => {
   ];
 };
 
+// notification validations
+// const updateNotificationValidator = () => {
+//   return [
+//     body("isRead")
+//       .trim()
+//       .notEmpty()
+//       .withMessage("isRead is required")
+//       .isIn(["true", "false"])
+//       .withMessage("isRead must either be true or false"),
+//   ];
+// };
+
 // result validations
 const createResultsValidator = () => {
   return [
@@ -294,5 +306,6 @@ export {
   createAttendanceValidator,
   updateAttendanceByIdValidator,
   createAnnounceValidator,
+  // updateNotificationValidator,
   createResultsValidator,
 };

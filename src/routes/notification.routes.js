@@ -5,7 +5,7 @@ import {
   verifyJWT,
 } from "../middlewares/auth.middleware.js";
 import { UserRolesEnum } from "../constants.js";
-import { validate } from "../middlewares/validator.middleware.js";
+import { deleteNotificationById, getAllNotifications, updateNotificationById } from "../controllers/notification.controller.js";
 
 const router = Router();
 
@@ -16,8 +16,6 @@ router
   .put(
     verifyJWT,
     checkApiKey,
-    updateNotificationValidator(),
-    validate,
     updateNotificationById,
   );
 
@@ -26,7 +24,7 @@ router
   .delete(
     verifyJWT,
     checkApiKey,
-    checkRole(UserRolesEnum.ADMIN),
+    checkRole([UserRolesEnum.ADMIN]),
     deleteNotificationById,
   );
 
