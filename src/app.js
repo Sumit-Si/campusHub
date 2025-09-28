@@ -35,6 +35,7 @@ import resultRouter from "./routes/result.routes.js"
 import enrollmentRouter from "./routes/enrollment.routes.js";
 import attendanceRouter from "./routes/attendance.routes.js";
 import notificationRouter from "./routes/notification.routes.js";
+import eventRouter from "./routes/event.routes.js";
 
 
 app.use("/api/v1/healthCheck",healthCheckRouter);
@@ -46,6 +47,7 @@ app.use("/api/v1/results",resultRouter);
 app.use("/api/v1/enrollments", enrollmentRouter);
 app.use("/api/v1/attendance", attendanceRouter);
 app.use("/api/v1/notifications", notificationRouter);
+app.use("/api/v1/events", eventRouter);
 
 
 export default app;

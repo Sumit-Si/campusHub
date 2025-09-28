@@ -64,3 +64,13 @@ export const NotificationStatusEnum = {
 export const AvailableNotificationStatus = Object.values(
   NotificationStatusEnum,
 );
+
+// EVENT constants
+export const EventStatusEnum = {
+  ACTIVE: "active",
+  INACTIVE: "inactive",
+};
+
+export const AvailableEventStatus = Object.values(
+  EventStatusEnum,
+);

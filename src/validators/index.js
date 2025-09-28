@@ -1,5 +1,6 @@
 import { body } from "express-validator";
 import {
+  AvailableAnnouncementTargetStatus,
   AvailableAttendanceStatus,
   AvailableEnrollStatus,
   AvailableUserRoles,
@@ -254,6 +255,54 @@ const createAnnounceValidator = () => {
 //   ];
 // };
 
+// event validations
+const createEventValidator = () => {
+  return [
+    body("title")
+      .trim()
+      .notEmpty()
+      .withMessage("Title is required")
+      .isLength({ min: 5, max: 500 })
+      .withMessage("Title must be 5-500 characters"),
+
+    body("description")
+      .trim()
+      .notEmpty()
+      .withMessage("Description is required")
+      .isLength({ min: 5, max: 1000 })
+      .withMessage("Description must be 5-1000 characters"),
+
+    body("date")
+      .trim()
+      .notEmpty()
+      .withMessage("Date is required")
+      .isISO8601()
+      .withMessage("Date must be a valid iso date"),
+
+    body("course")
+      .trim()
+      .optional()
+      .isMongoId()
+      .withMessage("Course id must be a valid mongoId"),
+
+    body("target")
+      .trim()
+      .optional()
+      .isIn(AvailableAnnouncementTargetStatus)
+      .withMessage("Target must be of: all, students, admins or faculty"),
+
+    body("location")
+      .trim()
+      .optional()
+      .isLength({ min: 3, max: 255 })
+      .withMessage("Location must be 3-255 characters"),
+  ];
+};
+
+const updateEventValidator = () => {
+  return [body("")];
+};
+
 // result validations
 const createResultsValidator = () => {
   return [
@@ -307,5 +356,7 @@ export {
   updateAttendanceByIdValidator,
   createAnnounceValidator,
   // updateNotificationValidator,
+  createEventValidator,
+  updateEventValidator,
   createResultsValidator,
 };

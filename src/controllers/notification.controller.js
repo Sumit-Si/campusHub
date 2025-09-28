@@ -30,6 +30,7 @@ const getAllNotifications = asyncHandler(async (req, res) => {
 
   const notifications = await Notification.find(filters)
     .populate("user", "username fullName image")
+    .populate("announcement", "title message target")
     .sort({[sortBy]: sortOrder})
     .skip(skip)
     .limit(limit);

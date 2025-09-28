@@ -1,6 +1,5 @@
 import Notification from "../models/notification.model.js";
 import { ApiError } from "../utils/ApiError.js";
-import { asyncHandler } from "../utils/asyncHandler.js";
 
 const sendNotification = async (users, message, type = "announcement") => {
   if (!Array.isArray(users) || users.length < 1) {
