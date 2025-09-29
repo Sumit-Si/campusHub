@@ -10,7 +10,13 @@ import {
   createEnrolledValidator,
   updateEnrolledValidator,
 } from "../validators/index.js";
-import { createEnrollment, deleteEnrollmentById, getEnrollmentById, getEnrollments, updateEnrollmentById } from "../controllers/enrollment.controller.js";
+import {
+  createEnrollment,
+  deleteEnrollmentById,
+  getEnrollmentById,
+  getEnrollments,
+  updateEnrollmentById,
+} from "../controllers/enrollment.controller.js";
 
 const router = Router();
 

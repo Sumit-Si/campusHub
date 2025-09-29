@@ -5,7 +5,7 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
 const getUsers = asyncHandler(async (req, res) => {
-  let { page = 1, limit = 10 } = req.query;
+  let { page = 1, limit = 10, sortBy = "createdAt", order = "asc" } = req.query;
 
   page = parseInt(page);
   limit = parseInt(limit);
@@ -17,8 +17,11 @@ const getUsers = asyncHandler(async (req, res) => {
 
   const skip = (page - 1) * limit;
 
+  const sortOrder = order === "desc" ? -1 : 1;
+
   const users = await User.find()
     .select("-password -refreshToken")
+    .sort({ [sortBy]: sortOrder })
     .skip(skip)
     .limit(limit);
 

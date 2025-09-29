@@ -9,7 +9,16 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 
 const getAnnouncements = asyncHandler(async (req, res) => {
-  let { page = 1, limit = 10, search, target, status } = req.query;
+  let {
+    page = 1,
+    limit = 10,
+    title,
+    target,
+    status,
+    course,
+    creator,
+    sortBy = "createdAt", order = "asc"
+  } = req.query;
 
   page = parseInt(page);
   limit = parseInt(limit);
@@ -21,13 +30,26 @@ const getAnnouncements = asyncHandler(async (req, res) => {
 
   const skip = (page - 1) * limit;
 
-  const Announcements = await Announcement.find()
+  const filters = {};
+
+  if(title) filters.title = {$regex: title, $options: "i"};
+  if(target) filters.target = target;
+  if(status) filters.status = status;
+  if(course) filters.course = course;
+  if(creator) filters.createdBy = creator;
+  filters.deletedAt = null;
+
+  const sortOrder = order === "desc" ? -1 : 1;
+
+  const Announcements = await Announcement.find(filters)
     .populate("course", "name description")
     .populate("createdBy", "username fullName image")
+    .sort({[sortBy]: sortOrder})
     .skip(skip)
-    .limit(limit);
+    .limit(limit)
+    .lean();
 
-  const totalAnnouncements = await Announcement.countDocuments();
+  const totalAnnouncements = await Announcement.countDocuments(filters);
   const totalPages = Math.ceil(totalAnnouncements / limit);
   res.status(200).json(
     new ApiResponse(
@@ -46,7 +68,7 @@ const getAnnouncements = asyncHandler(async (req, res) => {
 });
 
 const createAnnouncement = asyncHandler(async (req, res) => {
-  const { title, message, target, course, status } = req.body;
+  const { title, message, target, course } = req.body;
   const userId = req.user?._id;
 
   const existingGlobalAnnouncement = await Announcement.findOne({
@@ -106,7 +128,7 @@ const createAnnouncement = asyncHandler(async (req, res) => {
     targetToNotify.role = target;
   }
 
-  console.log(targetToNotify, "targetNotify");
+  // console.log(targetToNotify, "targetNotify");
 
   // check for course
   if (course) {
@@ -115,11 +137,11 @@ const createAnnouncement = asyncHandler(async (req, res) => {
       deletedAt: null,
     }).select("user");
 
-    console.log(enrollments, "enrollments");
+    // console.log(enrollments, "enrollments");
 
     // get userIds from enrollments
     const enrolledUserIds = enrollments.map((enroll) => enroll.user);
-    console.log(enrolledUserIds, "enrolledUsers");
+    // console.log(enrolledUserIds, "enrolledUsers");
 
     targetToNotify = {
       _id: {
@@ -128,20 +150,17 @@ const createAnnouncement = asyncHandler(async (req, res) => {
     };
   }
 
-  console.log(targetToNotify, "targetToNotify");
+  // console.log(targetToNotify, "targetToNotify");
 
   // users to notify
   const notifyToUsers = await User.find(targetToNotify).select(
     "username fullName image",
   );
 
-  console.log(notifyToUsers, "notifyToUsers");
+  // console.log(notifyToUsers, "notifyToUsers");
 
-  const notify = await sendNotification(
-    notifyToUsers,
-    message,
-  );
-  console.log(notify, "notify");
+  const notify = await sendNotification(notifyToUsers, message);
+  // console.log(notify, "notify");
 
   res
     .status(201)

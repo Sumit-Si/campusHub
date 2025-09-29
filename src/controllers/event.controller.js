@@ -19,9 +19,23 @@ const createEvent = asyncHandler(async (req, res) => {
     }
   }
 
-  //TODO: previous date validation needed
-  console.log(date,"date");
-  
+  if (new Date(date) <= new Date()) {
+    throw new ApiError(400, "Previous date not acceptable");
+  }
+
+  const existingEvent = await Event.findOne({
+    title,
+    date,
+    location,
+    course,
+  }).select("_id");
+
+  if (existingEvent) {
+    throw new ApiError(
+      400,
+      `Event already exists with title: ${title} - date: ${date} - location: ${location} ${course ? `- course: ${course}` : ""}`,
+    );
+  }
 
   try {
     const event = await Event.create({
@@ -50,10 +64,132 @@ const createEvent = asyncHandler(async (req, res) => {
   }
 });
 
-const getEvents = asyncHandler(async (req, res) => {});
+const getEvents = asyncHandler(async (req, res) => {
+  let {
+    page = 1,
+    limit = 10,
+    date,
+    title,
+    target,
+    order = "asc",
+    sortBy = "date",
+  } = req.query;
 
-const updateEventById = asyncHandler(async (req, res) => {});
+  page = parseInt(page);
+  limit = parseInt(limit);
 
-const deleteEventById = asyncHandler(async (req, res) => {});
+  if (page <= 0) page = 1;
+  if (limit <= 0 || limit >= 50) {
+    limit = 10;
+  }
+
+  const skip = (page - 1) * limit;
+
+  const filters = {};
+
+  if (target) filters.target = target;
+  if (date) filters.date = { $gte: new Date(date) };
+  if (title) filters.title = { $regex: title, $options: "i" };
+  filters.deletedAt = null;
+
+  const sortOrder = order === "desc" ? -1 : 1;
+
+  const events = await Event.find(filters)
+    .populate("createdBy", "username fullName image")
+    .populate("course", "name price")
+    .sort({ [sortBy]: sortOrder })
+    .skip(skip)
+    .limit(limit);
+
+  const totalEvents = await Event.countDocuments(filters);
+  const totalPages = Math.ceil(totalEvents / limit);
+
+  res.status(200).json(
+    new ApiResponse(
+      200,
+      {
+        events,
+        metadata: {
+          totalPages,
+          currentPage: page,
+          currentLimit: limit,
+        },
+      },
+      "Events fetched successfully",
+    ),
+  );
+});
+
+const updateEventById = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { title, description, location, status, target, date } = req.body || {};
+
+  const existingEvent = await Event.findOne({
+    _id: id,
+    deletedAt: null,
+  });
+
+  if (!existingEvent) {
+    throw new ApiError(404, "Event not exists");
+  }
+
+  if (new Date(date) <= new Date()) {
+    throw new ApiError(400, "Previous date not acceptable");
+  }
+
+  const event = await Event.findByIdAndUpdate(
+    id,
+    {
+      title,
+      description,
+      target,
+      status,
+      date,
+      location,
+    },
+    {
+      new: true,
+    },
+  );
+
+  if (!event) {
+    throw new ApiError(500, "Problem while updating event");
+  }
+
+  res
+    .status(200)
+    .json(new ApiResponse(200, event, "Event updated successfully"));
+});
+
+const deleteEventById = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  const existingEvent = await Event.findOne({
+    _id: id,
+    deletedAt: null,
+  });
+
+  if (!existingEvent) {
+    throw new ApiError(404, "Event not exists");
+  }
+
+  const event = await Event.findByIdAndUpdate(
+    id,
+    {
+      deletedAt: new Date(),
+    },
+    {
+      new: true,
+    },
+  );
+
+  if (!event) {
+    throw new ApiError(500, "Problem while deleting event");
+  }
+
+  res
+    .status(200)
+    .json(new ApiResponse(200, event, "Event deleted successfully"));
+});
 
 export { createEvent, getEvents, updateEventById, deleteEventById };

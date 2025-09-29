@@ -22,9 +22,8 @@ const getAllNotifications = asyncHandler(async (req, res) => {
     deletedAt: null,
   };
 
-  if (isRead === "true" || isRead === "false") {
-    filters.isRead = isRead;
-  }
+  if(isRead === "true") filters.isRead = true;
+  else if(isRead === "false") filters.isRead = false;
 
   const sortOrder = order === "desc" ? -1 : 1;
 
@@ -35,10 +34,7 @@ const getAllNotifications = asyncHandler(async (req, res) => {
     .skip(skip)
     .limit(limit);
 
-  const totalNotifications = await Notification.countDocuments({
-    deletedAt: null,
-    user: userId,
-  });
+  const totalNotifications = await Notification.countDocuments(filters);
   const totalPages = Math.ceil(totalNotifications / limit);
 
   res.status(200).json(

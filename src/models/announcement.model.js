@@ -1,5 +1,10 @@
 import mongoose, { Schema } from "mongoose";
-import { AnnouncementStatusEnum, AnnouncementTargetEnum, AvailableAnnouncementStatus, AvailableAnnouncementTargetStatus } from "../constants.js";
+import {
+  AnnouncementStatusEnum,
+  AnnouncementTargetEnum,
+  AvailableAnnouncementStatus,
+  AvailableAnnouncementTargetStatus,
+} from "../constants.js";
 
 const announcementSchema = new Schema(
   {

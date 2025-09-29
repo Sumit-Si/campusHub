@@ -52,7 +52,7 @@ const checkRole =
     } catch (error) {
       throw new ApiError(
         500,
-        error?.message || "Something went wrong while checking for admin",
+        error?.message || "Problem while checking for admin",
       );
     }
   };

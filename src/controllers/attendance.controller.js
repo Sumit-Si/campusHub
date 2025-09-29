@@ -19,7 +19,7 @@ const createAttendance = asyncHandler(async (req, res) => {
   const uniqueCourseIds = [
     ...new Set(attendanceRecords.map((attRecord) => attRecord.course)),
   ];
-  console.log(uniqueUserIds, uniqueCourseIds, "uniqueIds");
+  // console.log(uniqueUserIds, uniqueCourseIds, "uniqueIds");
 
   const users = await User.find({
     _id: {
@@ -27,10 +27,10 @@ const createAttendance = asyncHandler(async (req, res) => {
     },
   }).select("_id");
 
-  console.log(users, "users");
+  // console.log(users, "users");
 
   const userIdSet = new Set(users.map((user) => user._id.toString()));
-  console.log(userIdSet, "setUserId");
+  // console.log(userIdSet, "setUserId");
 
   const courses = await Course.find({
     _id: {
@@ -52,19 +52,19 @@ const createAttendance = asyncHandler(async (req, res) => {
     return { user, course };
   });
 
-  console.log(uniquePairs, "uniquePairs");
+  // console.log(uniquePairs, "uniquePairs");
 
   const enrollments = await Enrollment.find({
     $or: uniquePairs,
   }).select("user course");
 
-  console.log(enrollments, "enrollments");
+  // console.log(enrollments, "enrollments");
 
   const enrollmentSet = new Set(
     enrollments.map((e) => `${e.user}_${e.course}`),
   );
 
-  console.log(enrollmentSet, "enrollmentSet");
+  // console.log(enrollmentSet, "enrollmentSet");
 
   for (const attRecord of attendanceRecords) {
     const validUser = userIdSet.has(attRecord.user);
@@ -88,7 +88,7 @@ const createAttendance = asyncHandler(async (req, res) => {
       validAttRecords.push(attRecord);
     }
   }
-  console.log(validAttRecords, "validAttREcords");
+  // console.log(validAttRecords, "validAttREcords");
 
   try {
     const existingAttendance = await Attendance.find({
@@ -99,7 +99,7 @@ const createAttendance = asyncHandler(async (req, res) => {
       })),
     }).select("user course sessionDate");
 
-    console.log(existingAttendance, "existingRecord");
+    // console.log(existingAttendance, "existingRecord");
 
     const setExistingAtt = new Set(
       existingAttendance.map(
@@ -108,7 +108,7 @@ const createAttendance = asyncHandler(async (req, res) => {
       ),
     );
 
-    console.log(setExistingAtt, "setExistingAtt");
+    // console.log(setExistingAtt, "setExistingAtt");
 
     const recordsToInsert = validAttRecords.filter(
       (attRecord) =>
@@ -117,13 +117,13 @@ const createAttendance = asyncHandler(async (req, res) => {
         ),
     );
 
-    console.log(recordsToInsert, "uniqueAttREcords");
+    // console.log(recordsToInsert, "uniqueAttREcords");
 
     const markedBulkAttendance = await Attendance.insertMany(recordsToInsert, {
       ordered: false,
     });
 
-    console.log(markedBulkAttendance, "markAtt");
+    // console.log(markedBulkAttendance, "markAtt");
 
     if (!markedBulkAttendance) {
       throw new ApiError(500, "Problem while marking bulk attendance");
@@ -284,7 +284,9 @@ const getAttendanceByCourseId = asyncHandler(async (req, res) => {
     .skip(skip)
     .limit(limit);
 
-  const totalAttendance = await Attendance.countDocuments();
+  const totalAttendance = await Attendance.countDocuments({
+    course: courseId
+  });
   const totalPages = Math.ceil(totalAttendance / limit);
 
   res.status(200).json(
@@ -319,14 +321,12 @@ const getAttendanceByCourseIdAndSessionDate = asyncHandler(async (req, res) => {
   const skip = (page - 1) * limit;
 
   const parsedDate = new Date(sessionDate);
-  console.log(parsedDate, "parsedDate");
 
   if (isNaN(parsedDate)) {
     throw new ApiError(400, "Invalid sessionDate format");
   }
 
   const validSessionDate = new Date(parsedDate.setUTCHours(0, 0, 0, 0));
-  console.log(validSessionDate, "validSessionDate");
 
   const existingCourse = await Course.findOne({
     _id: courseId,

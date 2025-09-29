@@ -26,8 +26,9 @@ const getEnrollments = asyncHandler(async (req, res) => {
     .skip(skip)
     .limit(limit);
 
-
-  const totalEnrollments = await Enrollment.countDocuments();
+  const totalEnrollments = await Enrollment.countDocuments({
+    status,
+  });
   const totalPages = Math.ceil(totalEnrollments / limit);
 
   res.status(200).json(
@@ -47,7 +48,6 @@ const getEnrollments = asyncHandler(async (req, res) => {
 });
 
 const createEnrollment = asyncHandler(async (req, res) => {
-
   const { courseId, role, remarks } = req.body;
   const userId = req.user?._id;
 
@@ -122,15 +122,18 @@ const updateEnrollmentById = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Enrollment not exists");
   }
 
-  const updateData = {}
-  if(status !== undefined) updateData.status = status;
-  if(remarks !== undefined) updateData.remarks = remarks;
-
   const updateEnrollment = await Enrollment.findByIdAndUpdate(
     id,
-    updateData,
-    { new: true },
-  );
+    {
+      status,
+      remarks,
+    },
+    {
+      new: true,
+    },
+  )
+    .populate("user", "username fullName image")
+    .populate("course", "name price");
 
   if (!updateEnrollment) {
     throw new ApiError(500, "Problem while updating enrollment");
@@ -152,7 +155,9 @@ const deleteEnrollmentById = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Enrollment not exists");
   }
 
-  const deletedEnrollment = await Enrollment.findByIdAndDelete(id);
+  const deletedEnrollment = await Enrollment.findByIdAndDelete(id)
+    .populate("user", "username fullName image")
+    .populate("course", "name price");
 
   if (!deletedEnrollment) {
     throw new ApiError(500, "Problem while deleting enrollment");

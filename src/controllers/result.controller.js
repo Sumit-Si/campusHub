@@ -9,7 +9,7 @@ import Enrollment from "../models/enrollment.model.js";
 const checkResults = asyncHandler(async (req, res) => {
   const user = req.user;
   const { studentId } = req.params;
-  let { page = 1, limit = 10 } = req.query;
+  let { page = 1, limit = 10, sortBy = "createdAt", order = "asc" } = req.query;
 
   page = parseInt(page);
   limit = parseInt(limit);
@@ -20,6 +20,8 @@ const checkResults = asyncHandler(async (req, res) => {
   }
 
   const skip = (page - 1) * limit;
+
+  const sortOrder = order === "desc" ? -1 : 1;
 
   if (!studentId) {
     throw new ApiError(400, "Missing or Invalid studentId");
@@ -36,6 +38,7 @@ const checkResults = asyncHandler(async (req, res) => {
     .populate("student", "username fullName image")
     .populate("course", "name price")
     .populate("createdBy", "username fullName image")
+    .sort({ [sortBy]: sortOrder })
     .skip(skip)
     .limit(limit);
 
@@ -75,7 +78,6 @@ const createResults = asyncHandler(async (req, res) => {
     },
   }).select("_id");
 
-
   const userIdSet = new Set(users.map((user) => user._id.toString()));
 
   const courses = await Course.find({
@@ -83,7 +85,6 @@ const createResults = asyncHandler(async (req, res) => {
       $in: uniqueCourseIds,
     },
   }).select("_id");
-
 
   const courseIdSet = new Set(courses.map((course) => course._id.toString()));
 
@@ -101,7 +102,6 @@ const createResults = asyncHandler(async (req, res) => {
     const [student, course] = ucStringPair.split("_");
     return { user: student, course };
   });
-
 
   const enrollment = await Enrollment.find({
     $or: uniquePairs,
@@ -136,7 +136,7 @@ const createResults = asyncHandler(async (req, res) => {
       //     (validRes) => validRes.student === result.student,
       //   )
       // )  // no need
-        validResultRecords.push(result);
+      validResultRecords.push(result);
     }
   }
 

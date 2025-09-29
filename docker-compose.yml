@@ -1,0 +1,16 @@
+services:
+  db:
+    image: mongo
+    restart: always
+    container_name: campusHub
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: myusercampus
+      MONGO_INITDB_ROOT_PASSWORD: mypasswordcampus1234
+      MONGO_INITDB_DATABASE: campusHub
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+volumes:
+  mongo_data:

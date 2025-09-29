@@ -10,7 +10,14 @@ import {
 } from "../utils/cloudinary.js";
 
 const getCourses = asyncHandler(async (req, res) => {
-  const { page = 1, limit = 10 } = req.query;
+  const {
+    page = 1,
+    limit = 10,
+    name,
+    order = "asc",
+    sortBy = "createdAt",
+    createdBy,
+  } = req.query;
 
   if (page <= 0) page = 1;
   if (limit <= 0 || limit >= 50) {
@@ -19,20 +26,22 @@ const getCourses = asyncHandler(async (req, res) => {
 
   const skip = (page - 1) * limit;
 
-  const courses = await Course.find({
-    deletedAt: null,
-  })
+  const filters = {};
+
+  if (name) filters.name = { $regex: name, $options: "i" };
+  if (createdBy) filters.createdBy = createdBy;
+  filters.deletedAt = null;
+
+  const sortOrder = order === "desc" ? -1 : 1;
+
+  const courses = await Course.find(filters)
     .populate("materials", "name uploadFiles tags published")
+    .populate("createdBy", "username fullName image")
+    .sort({ [sortBy]: sortOrder })
     .skip(skip)
     .limit(limit);
 
-  if (!courses || courses?.length === 0) {
-    throw new ApiError(400, "Courses not exist");
-  }
-
-  const totalCourses = await Course.countDocuments({
-    deletedAt: null,
-  });
+  const totalCourses = await Course.countDocuments(filters);
   const totalPages = Math.ceil(totalCourses / limit);
 
   res.status(200).json(
@@ -106,11 +115,8 @@ const getMaterialsByCourseId = asyncHandler(async (req, res) => {
     .skip(skip)
     .limit(limit);
 
-  if (!course || course?.length === 0) {
-    throw new ApiError(400, "Course not exists");
-  }
-
   const totalCourses = await Course.countDocuments({
+    _id: courseId,
     deletedAt: null,
   });
   const totalPages = Math.ceil(totalCourses / limit);
@@ -181,7 +187,7 @@ const addMaterialsByCourseId = asyncHandler(async (req, res) => {
     );
 
     if (!updatedCourse) {
-      throw new ApiError(404, "Course not found");
+      throw new ApiError(404, "Course not exists");
     }
 
     const createdMaterial = await Material.findById(material?._id)
@@ -219,7 +225,7 @@ const addMaterialsByCourseId = asyncHandler(async (req, res) => {
 
 const getEnrolledUsers = asyncHandler(async (req, res) => {
   const { courseId } = req.params;
-  let { page = 1, limit = 10 } = req.query;
+  let { page = 1, limit = 10, sortBy = "createdAt", order = "asc" } = req.query;
 
   page = parseInt(page);
   limit = parseInt(limit);
@@ -230,6 +236,8 @@ const getEnrolledUsers = asyncHandler(async (req, res) => {
   }
 
   const skip = (page - 1) * limit;
+
+  const sortOrder = order === "desc" ? -1 : 1;
 
   const course = await Course.findOne({
     _id: courseId,
@@ -242,12 +250,13 @@ const getEnrolledUsers = asyncHandler(async (req, res) => {
 
   const enrolledUsers = await Enrollment.find({
     course: courseId,
+    deletedAt: null,
   })
     .populate("user", "username fullName image")
     .populate("course", "name price")
+    .sort({[sortBy]: sortOrder})
     .skip(skip)
     .limit(limit);
-
 
   const totalEnrollment = await Enrollment.countDocuments({
     course: courseId,

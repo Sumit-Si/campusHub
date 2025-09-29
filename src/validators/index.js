@@ -3,6 +3,7 @@ import {
   AvailableAnnouncementTargetStatus,
   AvailableAttendanceStatus,
   AvailableEnrollStatus,
+  AvailableEventStatus,
   AvailableUserRoles,
   UserRolesEnum,
 } from "../constants.js";
@@ -240,6 +241,12 @@ const createAnnounceValidator = () => {
       .withMessage("Message is required")
       .isLength({ min: 10, max: 1000 })
       .withMessage("Message must be 10-1000 characters"),
+
+    body("course")
+      .trim()
+      .optional()
+      .isMongoId()
+      .withMessage("Course id must be a valid mongoId"),
   ];
 };
 
@@ -300,7 +307,43 @@ const createEventValidator = () => {
 };
 
 const updateEventValidator = () => {
-  return [body("")];
+  return [
+    body("title")
+      .trim()
+      .optional()
+      .isLength({ min: 5, max: 500 })
+      .withMessage("Title must be 5-500 characters"),
+
+    body("description")
+      .trim()
+      .optional()
+      .isLength({ min: 5, max: 1000 })
+      .withMessage("Description must be 5-1000 characters"),
+
+    body("date")
+      .trim()
+      .optional()
+      .isISO8601()
+      .withMessage("Date must be a valid iso date"),
+
+    body("target")
+      .trim()
+      .optional()
+      .isIn(AvailableAnnouncementTargetStatus)
+      .withMessage("Target must be of: all, students, admins or faculty"),
+
+    body("status")
+      .trim()
+      .optional()
+      .isIn(AvailableEventStatus)
+      .withMessage("Status must either be active or inactive"),
+
+    body("location")
+      .trim()
+      .optional()
+      .isLength({ min: 3, max: 255 })
+      .withMessage("Location must be 3-255 characters"),
+  ];
 };
 
 // result validations

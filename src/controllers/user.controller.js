@@ -171,16 +171,6 @@ const generateApiKey = asyncHandler(async (req, res) => {
     const { expiresAt } = req.body;
     const key = crypto.randomBytes(32).toString("hex");
 
-    // const exisitingKey = await ApiKey.findOne({
-    //   createdBy: user?._id,
-    //   status: ApiKeyStatusEnum.ACTIVE,
-    //   expiresAt: null,
-    // })
-
-    // if(exisitingKey) {
-
-    // }
-
     const apiKey = await ApiKey.create({
       key,
       expiresAt,
@@ -197,7 +187,7 @@ const generateApiKey = asyncHandler(async (req, res) => {
 
     res
       .status(201)
-      .json(new ApiResponse(200, createdKey, "Api key generated successfully"));
+      .json(new ApiResponse(200, createdKey, "Apikey generated successfully"));
   } catch (error) {
     throw new ApiError(500, error.message || "Problem while creating apiKey");
   }
